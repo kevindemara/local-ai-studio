@@ -1,5 +1,5 @@
 'use strict';
-let studioTab='setup',setupStep=1,setupData=null,studioJobSignature='',studioPolling=false;
+let studioTab='setup',setupStep=1,setupData=null,studioJobSignature='',studioPolling=false,studioGoal='coding';
 const studioFinishedJobs=new Set();
 const studioEsc=escape;
 const studioButton=(label,command,extra='')=>`<button class="subtle-button" data-studio-command="${command}" ${extra}>${label}</button>`;
@@ -11,12 +11,13 @@ async function renderStudio(){
   if(studioTab==='setup')return renderSetup();if(studioTab==='github')return renderGitHub();if(studioTab==='extensions')return renderExtensions();return renderInsights();
 }
 async function renderSetup(){
-  const goal=$('setup-goal')?.value||'coding';setupData=await api('/studio/setup?goal='+goal);models=setupData.installed;renderComposer();
+  const goal=$('setup-goal')?.value||studioGoal;studioGoal=goal;setupData=await api('/studio/setup?goal='+goal);models=setupData.installed;renderComposer();
   const h=setupData.hardware;const steps=['Check your PC','Choose models','Start a project'];
   let html=`<div class="setup-steps">${steps.map((s,i)=>`<button data-setup-step="${i+1}" class="${setupStep===i+1?'selected':''}"><span>${i+1}</span>${s}</button>`).join('')}</div>`;
   if(setupStep===1){
     html+=studioHeading('01 / GET READY','A workspace that fits your computer','We check your hardware and required tools. Existing Ollama models can be reused.');
     html+=`<div class="hardware-grid"><article><span>PROCESSOR</span><strong>${studioEsc(h.cpu)}</strong><small>${h.cores} logical cores · ${studioEsc(h.arch)}</small></article><article><span>MEMORY</span><strong>${h.ramGiB.toFixed(1)} GB RAM</strong><small>${h.availableRamGiB.toFixed(1)} GB available now</small></article><article><span>GRAPHICS</span><strong>${studioEsc(h.gpus.map(g=>g.name).join(' / ')||'CPU mode')}</strong><small>${h.gpus.map(g=>g.memoryGiB?`${g.memoryGiB.toFixed(1)} GB ${h.unified?'shared':'VRAM'} (${studioEsc(g.confidence)})`:'VRAM unknown').join(' / ')||'Smaller models are recommended'}</small></article><article><span>STORAGE</span><strong>${h.diskFreeGiB===null?'Unknown':h.diskFreeGiB.toFixed(0)+' GB free'}</strong><small>Workspace disk · model storage may differ</small></article></div>`;
+    if(h.availableRamGiB<4)html+=`<p class="studio-note">Only ${h.availableRamGiB.toFixed(1)} GB RAM is available now. Close memory-heavy apps or choose a smaller model before running a build.</p>`;
     html+=h.warnings.map(w=>`<p class="studio-note">${studioEsc(w)}</p>`).join('');
     html+=`<div class="prerequisite-list">${setupData.prerequisites.map(p=>`<div><span class="fit-badge ${p.installed?'good':'cpu'}">${p.installed?'Ready':'Missing'}</span><div><strong>${p.label}</strong><small>${studioEsc(p.version||'Required for '+(p.id==='gh'?'GitHub workflows':'local development'))}</small></div>${p.installed?'':h.platform==='win32'&&p.id!=='node'?studioButton('Install','install',`data-package="${p.id}"`):studioLink(p.url,'Get '+p.label)}</div>`).join('')}</div><div class="studio-actions">${studioButton('Recheck','refresh')} ${studioButton('Start Ollama','start-ollama')}<button class="primary-button" data-setup-step="2">Choose my models →</button></div>`;
   }else if(setupStep===2){

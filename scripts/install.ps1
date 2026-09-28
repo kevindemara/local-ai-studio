@@ -37,6 +37,8 @@ try { & $nodePath $npmPath ci --ignore-scripts --no-fund; if ($LASTEXITCODE -ne 
 if ($shortcut.IsChecked) {
   $shell = New-Object -ComObject WScript.Shell
   $link = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'Local AI Studio Public.lnk'))
-  $link.TargetPath = Join-Path $studioRoot 'Launch.cmd'; $link.WorkingDirectory = $studioRoot; $link.Description = 'Open your local AI workspace'; $link.Save()
+  $link.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+  $link.Arguments = '-NoProfile -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File "' + (Join-Path $studioRoot 'scripts\start.ps1') + '"'
+  $link.WorkingDirectory = $studioRoot; $link.Description = 'Open your local AI workspace'; $link.Save()
 }
 & $nodePath (Join-Path $studioRoot 'scripts\launch.mjs')
