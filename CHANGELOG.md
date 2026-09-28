@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 — 2026-09-28
+
+- Expanded the reviewed model catalog from 5 to 11 options, with search, memory-fit and installed filters.
+- Added a searchable seven-server MCP catalog and guided Connect buttons with prerequisites, access review, live tool discovery and per-project configurations.
+- Added separate persistent-memory files per project, isolated Playwright browser sessions and read-only GitHub server defaults.
+- Failed or cancelled catalog connections remain disabled; npm server versions are pinned and account key values are never saved in manifests.
+
+
 ## 0.2.0 — 2026-09-28
 
 - Added a separate public source distribution and graphical Windows setup entry point.

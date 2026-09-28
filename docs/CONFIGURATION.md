@@ -43,6 +43,26 @@ These large assets are not installed by Setup.cmd and are not included in releas
 
 ## Plugins
 
+### Common servers
+
+Plugins & MCP includes a searchable catalog. Select a project, click **Connect**, review the server's access, check the trust box and choose **Connect to project**. A background job downloads a pinned npm package where needed and discovers its tools. Failed/cancelled connections are disabled. Reconnect retries the same project connection instead of adding duplicates.
+
+| Server | Prerequisites and behavior |
+| --- | --- |
+| Project files | Node/npm. Restricted to the selected folder by the server. Direct edits bypass Studio's file filters, change review and checkpoints; use Studio's built-in file tools when those protections are needed. |
+| Persistent memory | Node/npm. Separate `mcp-memory/<project-id>.jsonl` in the Studio data directory for each project. Include this directory in backups. |
+| Sequential thinking | Node/npm. Processes plan text locally; thought logging is disabled. |
+| Playwright browser | Node/npm and installed Google Chrome. Uses a headless, temporary isolated profile. Discovery does not validate browser actions or provide OS/network isolation. |
+| Context7 | Node/npm and internet. Optional `CONTEXT7_API_KEY`. Sends documentation queries to Context7. |
+| GitHub repository tools | Running Docker plus `GITHUB_PERSONAL_ACCESS_TOKEN`. Official pinned container, read-only repos/issues/pull-request tools. Token permissions control accessible repositories, not the assigned project. GitHub CLI login does not supply this token. |
+| Brave web search | Node/npm, internet plus `BRAVE_API_KEY`. Queries are sent to Brave; provider terms and limits apply. |
+
+For account keys, set the named variable in your user environment. On Windows: Start → Edit environment variables for your account → New, then click Recheck requirements. Catalog connections read these explicitly named Windows user variables again when connecting; no browser/server restart is required. On macOS/Linux, restart the Studio server from an environment containing the variable (closing only the browser does not stop a background server). Never paste keys into chats or manifests. Environment variables are not an encrypted credential vault. Only the necessary environment names are stored and only their referenced values are passed to the selected server. The catalog's Node/npm launcher also passes normal process-launch environment values and non-secret runtime settings; npm lifecycle scripts are disabled.
+
+Catalog configurations belong to one project and cannot be reassigned to a different folder. Connect a separate instance for another project. Other local programs may still access files as your user: project assignment is not an OS sandbox. Packages are downloaded from npm on first connection and can require internet; their dependency graph is not a fully reproducible lockfile.
+
+### Custom servers
+
 Import a JSON manifest under Plugins & MCP. Examples:
 
 ```json

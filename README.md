@@ -20,19 +20,19 @@ No Docker, cloud account or paid model subscription is required. Internet is nee
 ## What you can do
 
 - **Hardware-aware setup:** measured NVIDIA VRAM, CPU/RAM detection, Apple unified-memory handling, honest fallbacks for unknown adapters, model fit estimates and optional verified VRAM entry.
-- **Choose free local models:** dated, sourced catalog; visible memory fit; streaming download progress and cancellation; automatic discovery of existing Ollama chat models; a short native-tool/speed test.
+- **Choose free local models:** 11 dated, sourced choices with search and memory-fit/installed filters; streaming download progress and cancellation; automatic discovery of existing Ollama chat models; a short native-tool/speed test.
 - **Build connected projects:** real file creation and edits, source search, starter templates, plans, command output, verification/repair loops, live previews and API checks.
 - **Review and recover:** diffs, undo, checkpoints, chat forks, durable queued runs and interrupted-run recovery.
 - **Use GitHub visually:** account connection through GitHub CLI, repository search/clone, project switching, Git initialization, selected-file commits, branch creation/switching, pull, push and repository publishing.
 - **Customize changelogs:** preview a release entry using `{version}`, `{date}` and `{summary}`, then save it as a reviewed project change.
-- **Add plugins and MCP:** import a server manifest, explicitly trust it, choose enabled projects, discover tools and call them from Build mode. Local stdio and Streamable HTTP are supported through the official MCP client SDK. A bundled read-only example is included.
+- **Connect common MCP servers:** browse Project files, Persistent memory, Sequential thinking, Playwright, Context7, GitHub and Brave Search. Connect buttons show access and prerequisites, download pinned npm servers, discover tools and enable the selected project. Custom manifests, local stdio, Streamable HTTP and a bundled example are also supported.
 - **See history and usage:** actual input/output token graphs, project overviews, filtered run history, expandable tool/terminal records and a diagnostic export that excludes chats and file paths.
 
 Image generation is optional and requires a separately installed compatible local image engine. Model vision support does **not** mean image generation. See [configuration](docs/CONFIGURATION.md).
 
 ## Hardware and platforms
 
-16GB VRAM is a useful target, not a requirement. Smaller CPU-only PCs receive smaller model suggestions; larger GPUs can use larger models. The current curated catalog includes Gemma 4 12B, Qwen 3.5 9B, GPT-OSS 20B, Qwen 3 1.7B and Qwen 3.8 27B. It was reviewed on **2026-09-28**. Recommendations describe memory suitability; they do not claim one model is universally best.
+16GB VRAM is a useful target, not a requirement. Smaller CPU-only PCs receive smaller model suggestions; larger GPUs can use larger models. The 11-model catalog includes Gemma 4 12B/E2B/E4B, Qwen 3.5 9B/4B/2B/0.8B, GPT-OSS 20B, Qwen 3 1.7B, Qwen 3.8 27B and Ministral 3 8B. It was reviewed on **2026-09-28**. Recommendations describe memory suitability; they do not claim one model is universally best.
 
 The wizard reserves memory for the runtime and context. A model’s download size is not its complete memory requirement. In particular, the 18GB Qwen 3.8 27B download does not fit fully in a 16GB GPU. CPU-assisted loading can work when sufficient RAM is available, with lower speed.
 

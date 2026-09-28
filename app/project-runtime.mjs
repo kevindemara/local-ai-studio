@@ -16,7 +16,7 @@ export function packageInfo(project) {
   const pkg = JSON.parse(fs.readFileSync(target, 'utf8'));
   return { name: pkg.name, scripts: pkg.scripts || {}, dependencies: { ...pkg.dependencies, ...pkg.devDependencies } };
 }
-function npmArgs(args) {
+export function npmArgs(args) {
   const candidates=[path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),'/usr/share/nodejs/npm/bin/npm-cli.js',path.resolve(path.dirname(process.execPath),'../lib/node_modules/npm/bin/npm-cli.js')];
   try{candidates.unshift(path.join(path.dirname(require.resolve('npm/package.json')),'bin','npm-cli.js'));}catch{}
   const cli=candidates.find(file=>fs.existsSync(file));

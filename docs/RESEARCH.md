@@ -39,7 +39,23 @@ Document knowledge, isolated execution and browser verification are the most use
 | [gpt-oss:20b](https://ollama.com/library/gpt-oss:20b) | 14 GB | Apache-2.0 | Reasoning; tight memory fit on 16GB GPUs |
 | [qwen3:1.7b](https://ollama.com/library/qwen3:1.7b) | 1.4 GB | Apache-2.0 | Small-PC fallback |
 | [qwen3.8:27b](https://ollama.com/library/qwen3.8:27b) | 18 GB | Apache-2.0 | Larger coding/reasoning, requiring more VRAM or offloading |
+| [qwen3.5:4b](https://ollama.com/library/qwen3.5:4b) | 3.4 GB | Apache-2.0 | Smaller coding/general choice |
+| [qwen3.5:2b](https://ollama.com/library/qwen3.5:2b) | 2.7 GB | Apache-2.0 | Simple tasks; default Q8 weights |
+| [qwen3.5:0.8b](https://ollama.com/library/qwen3.5:0.8b) | 1.0 GB | Apache-2.0 | Very small fallback |
+| [gemma4:e2b](https://ollama.com/library/gemma4:e2b) | 7.2 GB | Apache-2.0 | Efficient Gemma alternative, including multimodal assets |
+| [gemma4:e4b](https://ollama.com/library/gemma4:e4b) | 9.6 GB | Apache-2.0 | Larger efficient Gemma alternative |
+| [ministral-3:8b](https://ollama.com/library/ministral-3:8b) | 6.0 GB | Apache-2.0 | Mistral-family tool-capable alternative |
 
 Tags are mutable. Catalog estimates are expressed in decimal download GB and binary working-memory GiB in the UI. Runtime/KV overhead is estimated conservatively at modest context; it is not an exact allocation prediction. Separate GPUs are not summed into a fictional single card. Apple unified memory reserves additional room for the OS. Unknown dedicated VRAM is not inferred from Windows' unreliable 32-bit AdapterRAM field.
 
 Hardware compatibility reference: [Ollama GPU support](https://docs.ollama.com/gpu). Integration references: [Ollama chat API](https://docs.ollama.com/api/chat), [streaming model pull API](https://docs.ollama.com/api/pull), [MCP official TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk), [GitHub authentication](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github).
+
+## Common MCP catalog sources
+
+Reviewed 2026-09-28 using the publisher repositories and npm metadata. The catalog pins direct server versions, explains local/external access and checks required environment variables without exposing their values.
+
+- [MCP reference servers](https://github.com/modelcontextprotocol/servers): filesystem, memory and sequential-thinking packages, version 2026.8.31.
+- [Microsoft Playwright MCP](https://github.com/microsoft/playwright-mcp): package 0.0.82, isolated/headless Chrome configuration.
+- [Upstash Context7](https://github.com/upstash/context7): package 4.1.1, optional environment API key.
+- [GitHub MCP server](https://github.com/github/github-mcp-server): official v1.12.2 Docker image, read-only repository/issue/pull-request tools and environment token.
+- [Brave Search MCP server](https://github.com/brave/brave-search-mcp-server): official package 2.1.4, stdio and environment API key.
