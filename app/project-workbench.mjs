@@ -70,7 +70,7 @@ export function projectContext(project, list, read, request = '') {
 }
 export async function verifyProject(project, list, read, signal, output) {
   const files = list(project).files.filter(f => f.kind !== 'image'), issues = [], checks = [];
-  const root = fs.realpathSync(project.folder);
+  const root = fs.realpathSync.native(project.folder);
   for (const file of files) {
     signal?.throwIfAborted();
     const text = read(project, file.path).content;
@@ -84,7 +84,7 @@ export async function verifyProject(project, list, read, signal, output) {
       const clean = ref.split(/[?#]/)[0]; if (!clean) continue;
       let target; try { target = path.resolve(clean.startsWith('/') ? root : path.dirname(path.join(root, file.path)), '.' + (clean.startsWith('/') ? clean : path.sep + clean)); } catch { continue; }
       const candidates = [target, ...['.js', '.jsx', '.ts', '.tsx', '.json', '.css', '/index.js', '/index.ts', '/index.tsx'].map(ext => target + ext)];
-      if (!candidates.some(f => { try { const real = fs.realpathSync(f), rel = path.relative(root, real); return !rel.startsWith('..') && !path.isAbsolute(rel) && fs.statSync(real).isFile(); } catch { return false; } })) {
+      if (!candidates.some(f => { try { const real = fs.realpathSync.native(f), rel = path.relative(root, real); return !rel.startsWith('..') && !path.isAbsolute(rel) && fs.statSync(real).isFile(); } catch { return false; } })) {
         // Bare routes are handled by routers; explicit file references and imports must exist.
         if (path.extname(clean) || clean.startsWith('.')) issues.push({ path: file.path, message: `Missing local reference: ${ref}` });
       }

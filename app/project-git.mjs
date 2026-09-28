@@ -7,11 +7,11 @@ import { executable } from './studio-jobs.mjs';
 const exec = promisify(execFile);
 async function git(project, args) {
   if (!project.folder) throw new Error('Create or link a project folder first.');
-  const result = await exec(executable('git'), ['-C', fs.realpathSync(project.folder), ...args], { windowsHide: true, timeout: 30_000, maxBuffer: 1_000_000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' } }); return result.stdout;
+  const result = await exec(executable('git'), ['-C', fs.realpathSync.native(project.folder), ...args], { windowsHide: true, timeout: 30_000, maxBuffer: 1_000_000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' } }); return result.stdout;
 }
 async function repository(project) {
   const root = (await git(project, ['rev-parse', '--show-toplevel'])).trim();
-  if (fs.realpathSync(root).toLowerCase() !== fs.realpathSync(project.folder).toLowerCase()) throw new Error('Link the repository root to use Git here.');
+  if (fs.realpathSync.native(root).toLowerCase() !== fs.realpathSync.native(project.folder).toLowerCase()) throw new Error('Link the repository root to use Git here.');
 }
 export async function gitStatus(project) {
   try { await repository(project); } catch (error) { return { repository: false, error: error.message.includes('ENOENT') ? 'Git is not installed.' : error.message }; }

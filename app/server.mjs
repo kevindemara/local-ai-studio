@@ -197,7 +197,7 @@ async function executeTool(project, call, controller, assistant, emit) {
     assistant.verifiedWrites = assistant.artifacts?.length || 0;
   } else if (name === 'start_project_preview') result = await startPreview(project, controller.signal);
   else throw new AppError('Unsupported project tool.');
-  if (['run_project_task', 'verify_project', 'start_project_preview', 'request_project_api'].includes(name)) {
+  if (name.startsWith('mcp_') || ['run_project_task', 'verify_project', 'start_project_preview', 'request_project_api'].includes(name)) {
     assistant.activity ||= []; assistant.activity.push({ id: randomUUID(), tool: name, result, createdAt: new Date().toISOString() }); save();
     emit({ type: 'activity', activity: assistant.activity.at(-1) });
   }
@@ -235,14 +235,14 @@ function folderOf(value) {
   const folder = String(value || '').trim();
   if (!folder) return '';
   if (!path.isAbsolute(folder)) throw new AppError('Enter an absolute folder path.');
-  try { const resolved = fs.realpathSync(folder); if (!fs.statSync(resolved).isDirectory()) throw new Error(); return resolved; }
+  try { const resolved = fs.realpathSync.native(folder); if (!fs.statSync(resolved).isDirectory()) throw new Error(); return resolved; }
   catch { throw new AppError('That folder does not exist. Choose an existing project folder.'); }
 }
 function safeFile(project, relative) {
   if (!project.folder) throw new AppError('Add a folder to this project first.');
   if (typeof relative !== 'string' || path.isAbsolute(relative) || relative.split(/[\\/]/).some(p => p === '..' || OMIT.has(p.toLowerCase()))) throw new AppError('Invalid project file.');
   let root, real;
-  try { root = fs.realpathSync(project.folder); real = fs.realpathSync(path.resolve(root, relative)); }
+  try { root = fs.realpathSync.native(project.folder); real = fs.realpathSync.native(path.resolve(root, relative)); }
   catch { throw new AppError('The project file no longer exists.', 404); }
   const rel = path.relative(root, real);
   if (!rel || rel.startsWith('..') || path.isAbsolute(rel) || !textFile(path.basename(real))) throw new AppError('This file cannot be attached.');
@@ -416,6 +416,8 @@ async function generate(req, res, input) {
       let result;
       try { result = await executeTool(project, call, controller, assistant, emit); }
       catch (error) { controller.signal.throwIfAborted(); result = { error: error.message }; emit({ type: 'phase', phase: `Tool needs correction: ${error.message}` }); }
+      const log = {type:'tool',tool:call.function.name,summary:JSON.stringify(result).slice(0,4000),createdAt:new Date().toISOString()};
+      assistant.toolLog ||= [];assistant.toolLog.push(log);assistant.toolLog=assistant.toolLog.slice(-80);save();emit(log);
       turns.push({ role: 'tool', tool_name: call.function.name, content: JSON.stringify(result) });
     }
     emit({ type: 'phase', phase: 'Continuing project build' });
