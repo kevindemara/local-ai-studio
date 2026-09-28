@@ -19,7 +19,7 @@ export function repoSlug(value){if(typeof value!=='string'||! /^[A-Za-z0-9_.-]+\
 export async function cloneRepository(slug,destination,signal){repoSlug(slug);if(fs.existsSync(destination))throw new Error('Choose a new project folder.');fs.mkdirSync(path.dirname(destination),{recursive:true});await gh(['repo','clone',slug,destination,'--','--no-recurse-submodules'],undefined,signal);signal?.throwIfAborted();return{folder:destination};}
 export async function gitCommand(project,args){
   const status=await gitStatus(project);if(!status.repository)throw new Error(status.error||'Initialize the repository first.');
-  return(await exec(executable('git'),['-C',fs.realpathSync(project.folder),...args],{env,windowsHide:true,timeout:90000,maxBuffer:1_000_000})).stdout;
+  return(await exec(executable('git'),['-C',fs.realpathSync.native(project.folder),...args],{env,windowsHide:true,timeout:90000,maxBuffer:1_000_000})).stdout;
 }
 export async function branches(project){const text=await gitCommand(project,['for-each-ref','--format=%(refname:short)','refs/heads']);let remote='';try{remote=(await gitCommand(project,['remote','get-url','origin'])).trim();}catch{}return{branches:text.trim().split('\n').filter(Boolean),remote};}
 export async function changeBranch(project,input){

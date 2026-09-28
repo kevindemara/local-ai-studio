@@ -9,7 +9,7 @@ const require=createRequire(import.meta.url);
 
 const running = new Map();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-function rootOf(project) { if (!project.folder) throw new Error('Create project files first.'); return fs.realpathSync(project.folder); }
+function rootOf(project) { if (!project.folder) throw new Error('Create project files first.'); return fs.realpathSync.native(project.folder); }
 export function packageInfo(project) {
   if (!project.folder || !fs.existsSync(path.join(project.folder, 'package.json'))) return null;
   const { target } = projectTarget(project, 'package.json');
@@ -117,7 +117,7 @@ export async function startPreview(project, signal) {
       throw new Error('No successful page response on the assigned port. Your dev/start script must use process.env.PORT and bind to 127.0.0.1. ' + job.output().slice(-4000));
     } catch (error) { await stopPreview(project); throw error; }
   }
-  const base = fs.existsSync(path.join(root, 'index.html')) ? root : fs.existsSync(path.join(root, 'dist', 'index.html')) ? fs.realpathSync(path.join(root, 'dist')) : '';
+  const base = fs.existsSync(path.join(root, 'index.html')) ? root : fs.existsSync(path.join(root, 'dist', 'index.html')) ? fs.realpathSync.native(path.join(root, 'dist')) : '';
   if (!base || !path.relative(root, base).split(path.sep).every(p => p !== '..')) throw new Error('Create index.html or a dev/start script first.');
   const server = http.createServer((req, res) => {
     try {
@@ -128,7 +128,7 @@ export async function startPreview(project, signal) {
       if (parts.some(p => p === '..' || p.startsWith('.') || ['node_modules', 'data', 'logs', 'backups'].includes(p.toLowerCase())) || /[:\0]/.test(name)) throw new Error('Invalid path');
       let file = path.join(base, ...parts);
       if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-      file = fs.realpathSync(file);
+      file = fs.realpathSync.native(file);
       const rel = path.relative(base, file);
       if (rel.startsWith('..') || path.isAbsolute(rel) || !MIME[path.extname(file).toLowerCase()] || !fs.statSync(file).isFile()) throw new Error('Invalid file');
       res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });

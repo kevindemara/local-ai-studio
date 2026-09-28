@@ -361,8 +361,8 @@ async function switchWorkTab(tab) {
   if (tab === 'files') await loadFiles(); else { $('workbench-view').innerHTML=''; await renderWorkbench(); }
 }
 function activityHtml(activity) {
-  const r = activity.result || {}, failed = r.success === false || r.error;
-  return '<details class="task-result" open><summary class="' + (failed ? 'failed' : '') + '">' + escape(r.command || ({ verify_project: 'Project checks', start_project_preview: 'App preview' })[activity.tool] || activity.tool) + ' · ' + (failed ? 'Failed' : r.running ? 'Running' : 'Finished') + '</summary>' + (r.checks ? '<ul>' + r.checks.map(c => '<li>' + escape(c.name) + ' · ' + (c.skipped ? 'Skipped' : c.success ? 'Passed' : 'Failed') + (c.output ? '<details><summary>Command output</summary><pre>' + escape(c.output) + '</pre></details>' : '') + '</li>').join('') + '</ul>' : '') + (r.issues?.length ? '<pre>' + escape(r.issues.map(i => (i.path || '') + ': ' + i.message + (i.output ? '\n' + i.output : '')).join('\n')) + '</pre>' : '') + (r.output || r.error ? '<pre>' + escape(r.output || r.error) + '</pre>' : '') + (r.note ? '<p class="field-help">' + escape(r.note) + '</p>' : '') + '</details>';
+  const r = activity.result || {}, failed = r.success === false || r.error || r.isError;
+  return '<details class="task-result" open><summary class="' + (failed ? 'failed' : '') + '">' + escape(r.command || (r.server ? r.server + ' / ' + r.tool : '') || ({ verify_project: 'Project checks', start_project_preview: 'App preview' })[activity.tool] || activity.tool) + ' · ' + (failed ? 'Failed' : r.running ? 'Running' : 'Finished') + '</summary>' + (r.checks ? '<ul>' + r.checks.map(c => '<li>' + escape(c.name) + ' · ' + (c.skipped ? 'Skipped' : c.success ? 'Passed' : 'Failed') + (c.output ? '<details><summary>Command output</summary><pre>' + escape(c.output) + '</pre></details>' : '') + '</li>').join('') + '</ul>' : '') + (r.issues?.length ? '<pre>' + escape(r.issues.map(i => (i.path || '') + ': ' + i.message + (i.output ? '\n' + i.output : '')).join('\n')) + '</pre>' : '') + (r.output || r.error || r.content ? '<pre>' + escape(r.output || r.error || r.content) + '</pre>' : '') + (r.note ? '<p class="field-help">' + escape(r.note) + '</p>' : '') + '</details>';
 }
 async function renderWorkbench() {
   if ($('file-panel').hidden || workTab === 'files' || !project()) return;
@@ -456,7 +456,7 @@ async function syncRuns() {
       if (!['running','queued'].includes(relevant.status) && signature!==runSignature) { void loadFiles(); if(workTab==='preview') setTimeout(()=>void renderWorkbench(),0); }
     }
     if (signature!==runSignature && workTab==='runs') void renderWorkbench();
-    runSignature=signature; lastRunChat=chat()?.id || ''; 
+    runSignature=signature; lastRunChat=chat()?.id || '';
     // Manual tasks and image generation still use their existing UI lifecycle.
     if (running || runs.some(r=>r.status==='queued')) { busy=true;phase=running?.phase || 'Request queued'; }
     else if (phase && !['Running project task','Starting app preview','Loading image model'].includes(phase) && $('image-stop').hidden) { busy=false;phase=''; }
