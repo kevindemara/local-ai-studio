@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { randomUUID, randomBytes } from 'node:crypto';
+import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { projectTarget, writeProjectFile } from './project-files.mjs';
@@ -21,11 +21,15 @@ import { Extensions } from './extensions.mjs';
 import { catalogStatus, catalogServer, serverEnvironment } from './mcp-catalog.mjs';
 import * as github from './github-workflows.mjs';
 import { usageOverview, diagnosticReport } from './insights.mjs';
+import { Backups, checkUpdates, prepareUpdate } from './maintenance.mjs';
+import { kickoff } from './public/helpers.mjs';
 
 const exec = promisify(execFile);
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA = process.env.LOCAL_AI_DATA_DIR || path.join(process.platform === 'win32' ? (process.env.LOCALAPPDATA || os.homedir()) : (process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share')), 'LocalAIStudio');
 const PORT = Number(process.env.LOCAL_AI_PORT || 3211);
+const APP_ROOT=path.dirname(ROOT), APP_VERSION=JSON.parse(fs.readFileSync(path.join(APP_ROOT,'package.json'),'utf8')).version;
+const backups=new Backups(DATA);let latestUpdate=null;
 const OLLAMA_PORT = Number(process.env.LOCAL_AI_OLLAMA_PORT || 11434);
 if (!Number.isInteger(OLLAMA_PORT) || OLLAMA_PORT < 1 || OLLAMA_PORT > 65535) throw new Error('Invalid local Ollama port.');
 const OLLAMA = `http://127.0.0.1:${OLLAMA_PORT}`;
@@ -251,7 +255,7 @@ function safeFile(project, relative) {
   if (!stat.isFile() || stat.size > 100_000) throw new AppError('Choose a text file smaller than 100 KB.');
   const content = fs.readFileSync(real, 'utf8');
   if (content.includes('\0')) throw new AppError('Binary files cannot be attached.');
-  return { path: relative.replaceAll('\\', '/'), content, bytes: stat.size };
+  return { path: relative.replaceAll('\\', '/'), content, bytes: stat.size, revision:createHash('sha256').update(content).digest('hex') };
 }
 function listFiles(project) {
   if (!project.folder) return { files: [], truncated: false };
@@ -475,6 +479,7 @@ const server = http.createServer(async (req, res) => {
     if (route === '/api/health' && req.method === 'GET') return json(res, { app: 'local-ai-studio', pid: process.pid });
     if (route === '/api/bootstrap' && req.method === 'GET') { await refreshModels(); return json(res, { token: TOKEN, state, models: MODELS }); }
     if (route.startsWith('/api/') && req.headers['x-local-token'] !== TOKEN) throw new AppError('Reload the app to reconnect.', 403);
+    if(route.startsWith('/api/')&&!['GET','HEAD'].includes(req.method)&&!route.match(/^\/api\/studio\/jobs\/[^/]+\/cancel$/)&&route!=='/api/server-stop'&&state.setupJobs.some(j=>['backup','restore','update'].includes(j.kind)&&j.status==='running'))throw new AppError('Wait for workspace maintenance to finish.',409);
     if (route === '/api/studio/setup' && req.method === 'GET') { const h=await hardware();const installed=await refreshModels();return json(res,{hardware:h,prerequisites:await prerequisites(),catalog:{...catalog,models:recommendations(h,url.searchParams.get('goal')||'coding')},installed,jobs:state.setupJobs,settings:state.settings}); }
     if (route === '/api/studio/settings' && req.method === 'PATCH') {
       idle();const input=await body(req);if(input.contextTokens!==undefined){if(![4096,8192,16384,32768].includes(input.contextTokens))throw new AppError('Choose a supported context size.');state.settings.contextTokens=input.contextTokens;}
@@ -501,6 +506,34 @@ const server = http.createServer(async (req, res) => {
         const benchmark={model,nativeTools:true,toolCalled:!!called,seconds:(Date.now()-start)/1000,tokens:result.eval_count||0,tokensPerSecond:result.eval_duration?(result.eval_count||0)*1e9/result.eval_duration:0,createdAt:new Date().toISOString()};
         state.modelTests ||= [];state.modelTests.push(benchmark);state.modelTests=state.modelTests.slice(-50);save();return benchmark;
       }),202);
+    }
+    if(route==='/api/studio/kickoff'&&req.method==='POST')return json(res,kickoff(await body(req)));
+    if(route==='/api/studio/maintenance'&&req.method==='GET')return json(res,{version:APP_VERSION,developerCheckout:fs.existsSync(path.join(APP_ROOT,'.git')),channel:state.settings.updateChannel||'preview',automatic:state.settings.updateChecks!==false,update:latestUpdate,backups:await backups.list(),backupFolder:path.join(DATA,'snapshots'),busy:Boolean(active)||studioBusy()||state.runs.some(r=>['running','queued'].includes(r.status))});
+    if(route==='/api/studio/updates/preferences'&&req.method==='POST'){const input=await body(req);state.settings.updateChannel=input.channel==='stable'?'stable':'preview';state.settings.updateChecks=input.automatic!==false;save();return json(res,{ok:true});}
+    if(route==='/api/studio/updates/check'&&req.method==='POST'){const input=await body(req);const channel=input.channel==='stable'?'stable':'preview';state.settings.updateChannel=channel;state.settings.updateChecks=input.automatic!==false;save();latestUpdate=await checkUpdates(APP_VERSION,channel);return json(res,latestUpdate);}
+    if(route==='/api/studio/backups'&&req.method==='POST'){
+      idle();if(state.runs.some(r=>r.status==='queued'))throw new AppError('Finish or cancel queued builds first.',409);const input=await body(req);
+      return json(res,studioJobs.start('backup','Back up workspace',(signal,update)=>backups.create(state,input.label,signal,update)),202);
+    }
+    if(route==='/api/studio/backups/restore'&&req.method==='POST'){
+      idle();if(state.runs.some(r=>r.status==='queued'))throw new AppError('Finish or cancel queued builds first.',409);const input=await body(req);if(input.confirm!==true)throw new AppError('Review recovery before restoring.');
+      return json(res,studioJobs.start('restore','Recover workspace',async(signal,update)=>{await backups.create(state,'Before recovery',signal,update);await stopAllPreviews();await extensions.close();const restored=await backups.restore(input.id,signal,update);const jobs=state.setupJobs;for(const key of Object.keys(state))delete state[key];Object.assign(state,restored.workspace,{setupJobs:jobs});save();return {destination:restored.destination};}),202);
+    }
+    if(route==='/api/studio/updates/prepare'&&req.method==='POST'){
+      idle();if(state.runs.some(r=>r.status==='queued'))throw new AppError('Finish or cancel queued builds first.',409);
+      latestUpdate=await checkUpdates(APP_VERSION,state.settings.updateChannel||'preview');
+      return json(res,studioJobs.start('update','Prepare application update',async(signal,update)=>{const backup=await backups.create(state,'Before app update',signal,update);return {...await prepareUpdate(latestUpdate,DATA,signal,update),backupId:backup.id};}),202);
+    }
+    if(route==='/api/studio/updates/activate'&&req.method==='POST'){
+      idle();if(state.runs.some(r=>r.status==='queued'))throw new AppError('Finish or cancel queued builds first.',409);if(fs.existsSync(path.join(APP_ROOT,'.git')))throw new AppError('Developer checkouts are updated with Git. The prepared release can be launched separately.');const input=await body(req);
+      const job=state.setupJobs.find(j=>j.id===input.jobId&&j.kind==='update'&&j.status==='complete');if(!job?.result?.folder)throw new AppError('Prepare a verified update first.');const next=fs.realpathSync(job.result.folder),releaseRoot=fs.realpathSync(path.join(DATA,'app-releases'));if(!next.startsWith(releaseRoot+path.sep)||fs.lstatSync(job.result.folder).isSymbolicLink())throw new AppError('Invalid prepared installation.');
+      const helper=path.join(DATA,'update-launch.mjs');fs.copyFileSync(path.join(APP_ROOT,'scripts','update-launch.mjs'),helper);const {spawn}=await import('node:child_process');const child=spawn(process.execPath,[helper,String(process.pid),next,APP_ROOT,DATA,String(PORT)],{cwd:DATA,detached:true,windowsHide:true,stdio:'ignore'});child.unref();queue.close();await extensions.close();await stopAllPreviews();json(res,{restarting:true});setTimeout(()=>server.close(()=>process.exit(0)),300);return;
+    }
+    if(route==='/api/studio/recovery'&&req.method==='POST'){
+      idle();const input=await body(req);if(input.action==='context'){state.settings.contextTokens=4096;save();return json(res,{contextTokens:4096});}
+      if(input.action==='unload'){await stopModels();return json(res,{ok:true});}
+      if(input.action==='smaller'){await refreshModels();const current=MODELS.find(m=>m.id===input.currentModel),choices=MODELS.filter(m=>m.size>0&&(!current||m.size<current.size)).sort((a,b)=>a.size-b.size);if(!choices.length)throw new AppError('No smaller installed model is available. Download one in Setup & models.');return json(res,{model:choices[0].id});}
+      throw new AppError('Choose a recovery action.');
     }
     if (route === '/api/studio/jobs' && req.method === 'GET') return json(res,state.setupJobs);
     const jobMatch=route.match(/^\/api\/studio\/jobs\/([^/]+)\/cancel$/);if(jobMatch&&req.method==='POST')return json(res,studioJobs.cancel(jobMatch[1]));
@@ -544,6 +577,7 @@ const server = http.createServer(async (req, res) => {
     if (route === '/api/templates' && req.method === 'GET') return json(res,templates);
     if (route === '/api/runs' && req.method === 'GET') return json(res,state.runs.slice(-100).reverse().map(({events,output,...run}) => run));
     if (route === '/api/runs' && req.method === 'POST') {
+      if(state.setupJobs.some(j=>['backup','restore','update'].includes(j.kind)&&j.status==='running'))throw new AppError('Wait for workspace maintenance to finish.',409);
       const input = await body(req), chat = chatById(input.chatId); projectById(chat.projectId);
       const content = String(input.content || '').trim(); if (!content || content.length > 16000) throw new AppError('Use a request under 16,000 characters.');
       return json(res,queue.enqueue({chatId:chat.id,projectId:chat.projectId,content,attachments:[...(chat.attachments || [])],mode:modeOf(input.mode || chat.mode),model:modelId(input.model || chat.model)}),202);
@@ -554,8 +588,10 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'GET' && !runMatch[2]) return json(res,{run,chat:chatById(run.chatId),project:projectById(run.projectId)});
       if (req.method === 'POST' && runMatch[2] === 'cancel') { queue.cancelQueued(run.id); if (active?.runId === run.id) active.controller.abort(); return json(res,{ok:true}); }
       if (req.method === 'POST' && runMatch[2] === 'continue') {
+        if(state.setupJobs.some(j=>['backup','restore','update'].includes(j.kind)&&j.status==='running'))throw new AppError('Wait for workspace maintenance to finish.',409);
         if (['running','queued'].includes(run.status)) throw new AppError('This request is still active.');
-        return json(res,queue.enqueue({chatId:run.chatId,projectId:run.projectId,model:run.model,mode:run.mode,content:'Continue this request from the saved project files and previous tool results. Inspect the current files first and complete remaining work.\n'+run.content.slice(0,14000)}),202);
+        const input=await body(req);
+        return json(res,queue.enqueue({chatId:run.chatId,projectId:run.projectId,model:modelId(input.model||run.model),mode:run.mode,content:'Continue this request from the saved project files and previous tool results. Inspect the current files first and complete remaining work.\n'+run.content.slice(0,14000)}),202);
       }
       throw new AppError('Method not allowed.',405);
     }
@@ -635,6 +671,7 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'GET' && projectMatch[2] === 'file') return json(res, safeFile(project, url.searchParams.get('path')));
       if (req.method === 'POST' && projectMatch[2] === 'file') {
         idle(); const input = await body(req); ensureProjectFolder(project);
+        if(input.expectedRevision!==undefined&&safeFile(project,input.path).revision!==input.expectedRevision)throw new AppError('This file changed since you opened it. Reload it before saving, or copy your draft to a new file.',409);
         const result = trackedWrite(project, input.path, input.content, path.join(DATA, 'backups', project.id));
         return json(res, { ...result, project });
       }
@@ -642,6 +679,7 @@ const server = http.createServer(async (req, res) => {
         idle(); const input = await body(req);
         const next = { ...project, name: nameOf(input.name, project.name), folder: input.folder === undefined ? project.folder : folderOf(input.folder), instructions: input.instructions === undefined ? project.instructions : String(input.instructions).slice(0, 4000) };
         if (input.memory !== undefined) next.memory = String(input.memory).slice(0,4000);
+        if (input.kickoffPrompt !== undefined) next.kickoffPrompt=String(input.kickoffPrompt).slice(0,12000);
         if (input.allowCommands !== undefined) next.allowCommands = input.allowCommands !== false;
         if (next.folder !== project.folder && state.runs.some(r=>r.projectId === project.id && r.status === 'queued')) throw new AppError('Cancel queued requests before changing their project folder.');
         if (next.folder !== project.folder) await stopPreview(project);
@@ -704,10 +742,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (route.startsWith('/api/')) throw new AppError('Route not found.', 404);
     if (req.method !== 'GET' && req.method !== 'HEAD') throw new AppError('Method not allowed.', 405);
-    const staticFiles = { '/': 'index.html', '/index.html': 'index.html', '/app.js': 'app.js', '/experience.js':'experience.js', '/styles.css': 'styles.css', '/icon.svg': 'icon.svg' };
+    const staticFiles = { '/': 'index.html', '/index.html': 'index.html', '/app.js': 'app.js', '/experience.js':'experience.js', '/styles.css': 'styles.css', '/icon.svg': 'icon.svg', '/logo.svg': 'logo.svg', '/mark.svg': 'mark.svg', '/favicon.svg': 'favicon.svg', '/favicon.ico': 'icon.ico', '/icon.png': 'icon.png' };
+    Object.assign(staticFiles,{'/workspace.js':'workspace.js','/workspace.css':'workspace.css','/helpers.mjs':'helpers.mjs'});
     const file = staticFiles[route]; if (!file) throw new AppError('File not found.', 404);
-    const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
-    res.writeHead(200, { 'Content-Type': types[path.extname(file)] + '; charset=utf-8', 'Cache-Control': 'no-cache' });
+    const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs':'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png' };
+    res.writeHead(200, { 'Content-Type': types[path.extname(file)] + (/\.(png|ico)$/.test(file) ? '' : '; charset=utf-8'), 'Cache-Control': 'no-cache' });
     res.end(req.method === 'HEAD' ? undefined : fs.readFileSync(path.join(ROOT, 'public', file)));
   } catch (error) {
     if (res.headersSent) { if (!res.destroyed) res.end(JSON.stringify({ type: 'error', error: error.message }) + '\n'); }
@@ -718,4 +757,6 @@ server.listen(PORT, '127.0.0.1', () => {
   fs.writeFileSync(path.join(DATA, 'server.pid'), String(process.pid));
   console.log(`Local AI Studio: http://127.0.0.1:${PORT}`); void queue.pump();
 });
+async function automaticUpdateCheck(){if(state.settings.updateChecks===false||process.env.NODE_ENV==='test')return;try{latestUpdate=await checkUpdates(APP_VERSION,state.settings.updateChannel||'preview');}catch(e){latestUpdate={available:false,error:e.message,checkedAt:new Date().toISOString()};}}
+setTimeout(()=>void automaticUpdateCheck(),1000).unref();setInterval(()=>void automaticUpdateCheck(),6*60*60*1000).unref();
 server.on('error', error => { console.error(error.message); process.exit(1); });

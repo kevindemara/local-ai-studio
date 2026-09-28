@@ -2,9 +2,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-const root=path.resolve(import.meta.dirname,'..'),port=Number(process.env.LOCAL_AI_PORT||3211),url=`http://127.0.0.1:${port}`;
+let root=path.resolve(import.meta.dirname,'..');const port=Number(process.env.LOCAL_AI_PORT||3211),url=`http://127.0.0.1:${port}`;
 const data=process.env.LOCAL_AI_DATA_DIR||path.join(process.platform==='win32'?(process.env.LOCALAPPDATA||os.homedir()):(process.env.XDG_DATA_HOME||path.join(os.homedir(),'.local','share')),'LocalAIStudio');
 fs.mkdirSync(data,{recursive:true});
+if(!fs.existsSync(path.join(root,'.git'))){try{const active=JSON.parse(fs.readFileSync(path.join(data,'active-app.json'),'utf8'));const releases=fs.realpathSync(path.join(data,'app-releases')),target=fs.realpathSync(active.root);if(target.startsWith(releases+path.sep)&&JSON.parse(fs.readFileSync(path.join(target,'package.json'),'utf8')).name==='local-ai-studio')root=target;}catch{}}
 async function running(){try{const r=await fetch(url+'/api/health',{signal:AbortSignal.timeout(1000)});return r.ok&&(await r.json()).app==='local-ai-studio';}catch{return false;}}
 if(!await running()){
   const output=fs.openSync(path.join(data,'server.log'),'a');

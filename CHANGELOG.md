@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — 2026-09-28
+
+- Added a unified build workspace with keyboard-resizable file/chat panels, inline editing, optional idle autosave, stale-save protection, live preview and task output.
+- Added a guided project kickoff wizard with editable goals/pages/style plans, connected starters and an explicit Build this plan action.
+- Added progress stages based on recorded file/check/preview results, a collapsed setup activity drawer and actionable failed-build recovery.
+- Added automatic GitHub release checks, Preview/Stable channels, digest-verified side-by-side release installation, idle activation and fallback to the previous app if startup fails. Git checkouts remain under Git control.
+- Added local workspace backups and checksum-verified recovery into separate project folders; existing projects and credential stores remain intact.
+
+- Applied the Local Core identity to the app, browser icons, Windows setup and shortcuts, and README. Added outlined SVG and transparent PNG brand assets with light, dark, and monochrome variants.
+
 ## 0.2.2 — 2026-09-28
 
 - Expanded the MCP catalog from 7 to 25 servers across productivity, design, monitoring, databases, documentation, web research and AI resources.
