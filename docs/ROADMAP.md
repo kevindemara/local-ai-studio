@@ -2,7 +2,7 @@
 
 ## Available in 0.2 preview
 
-Hardware-aware onboarding; Windows prerequisite installation; 11 searchable free-model choices; automatic installed-model discovery; real project files and repairs; previews/API checks; recoverable changes/checkpoints; durable runs/forks; GitHub account/repository workflows; changelog templates; seven guided common-MCP connections and custom stdio/HTTP manifests; measured token history and diagnostic exports.
+Hardware-aware onboarding; Windows prerequisite installation; 11 searchable free-model choices; automatic installed-model discovery; real project files and repairs; previews/API checks; recoverable changes/checkpoints; durable runs/forks; GitHub account/repository workflows; changelog templates; 25 guided common-MCP connections, including browser sign-in and Python runtimes and custom stdio/HTTP manifests; measured token history and diagnostic exports.
 
 ## Next milestones
 
@@ -13,4 +13,4 @@ Hardware-aware onboarding; Windows prerequisite installation; 11 searchable free
 - Accessibility/theme/localization work and broader extension discovery, provenance and updates.
 - Signed desktop installers, application update channels and fully guided prerequisite installation on macOS/Linux.
 
-The current Windows setup is a source-package launcher with a graphical first step, not a signed MSI or Electron application. Hardware fit is advisory. No automatic claim of “best model” is made without task measurements. Remote MCP OAuth and a plugin marketplace are not included in this preview.
+The current Windows setup is a source-package launcher with a graphical first step, not a signed MSI or Electron application. Hardware fit is advisory. No automatic claim of “best model” is made without task measurements. A curated connection catalog with remote OAuth is included; an automatic plugin marketplace and update manager remain future work.

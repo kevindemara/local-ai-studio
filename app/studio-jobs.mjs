@@ -7,7 +7,7 @@ import { killTree } from './project-runtime.mjs';
 const exec = promisify(execFile);
 export function executable(name) {
   if (process.platform==='win32') {
-    const candidates = name==='gh' ? [path.join(process.env.ProgramFiles||'C:\\Program Files','GitHub CLI','gh.exe')] : name==='ollama' ? [path.join(process.env.LOCALAPPDATA||'','Programs','Ollama','ollama.exe')] : name==='git' ? [path.join(process.env.ProgramFiles||'C:\\Program Files','Git','cmd','git.exe')] : [];
+    const candidates = name==='gh' ? [path.join(process.env.ProgramFiles||'C:\\Program Files','GitHub CLI','gh.exe')] : name==='ollama' ? [path.join(process.env.LOCALAPPDATA||'','Programs','Ollama','ollama.exe')] : name==='uv' ? [path.join(process.env.LOCALAPPDATA||'','Microsoft','WinGet','Links','uv.exe'),path.join(process.env.USERPROFILE||'','.local','bin','uv.exe'),path.join(process.env.LOCALAPPDATA||'','Microsoft','WinGet','Packages','astral-sh.uv_Microsoft.Winget.Source_8wekyb3d8bbwe','uv.exe')] : name==='git' ? [path.join(process.env.ProgramFiles||'C:\\Program Files','Git','cmd','git.exe')] : [];
     for(const file of candidates) if(fs.existsSync(file)) return file;
   }
   return name;
@@ -39,8 +39,8 @@ export async function runCommand(file,args,{signal,cwd,onOutput=()=>{},env={}}={
   });
 }
 export async function installPrerequisite(id, signal, update) {
-  const packages={ollama:'Ollama.Ollama',git:'Git.Git',gh:'GitHub.cli'};
-  if(!packages[id])throw new Error('Choose Ollama, Git or GitHub CLI.');
+  const packages={ollama:'Ollama.Ollama',git:'Git.Git',gh:'GitHub.cli',uv:'astral-sh.uv'};
+  if(!packages[id])throw new Error('Choose Ollama, Git, GitHub CLI or uv.');
   if(process.platform!=='win32')throw new Error('Use the official download link or your package manager on this platform, then recheck.');
   return runCommand('winget',['install','--id',packages[id],'--exact','--source','winget','--silent','--accept-package-agreements','--accept-source-agreements','--disable-interactivity'],{signal,onOutput:output=>update({message:output.slice(-1200)})});
 }
