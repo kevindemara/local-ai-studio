@@ -1,0 +1,11 @@
+{
+  "reviewedAt": "2026-09-28",
+  "note": "Curated local, free-to-download models. Sizes and availability can change. Fit is an estimate, not a benchmark or universal best-model claim. Check the linked model terms before redistribution.",
+  "models": [
+    {"id":"gemma4:12b","label":"Gemma 4 12B","downloadGB":7.6,"license":"Apache-2.0","goals":["everyday","coding"],"priority":8,"source":"https://ollama.com/library/gemma4:12b","description":"Recent general-purpose model; generous headroom on 16GB GPUs."},
+    {"id":"qwen3.5:9b","label":"Qwen 3.5 9B","downloadGB":6.6,"license":"Apache-2.0","goals":["coding","everyday"],"priority":7,"source":"https://ollama.com/library/qwen3.5:9b","description":"Balanced coding and reasoning option for smaller GPUs."},
+    {"id":"gpt-oss:20b","label":"GPT-OSS 20B","downloadGB":14,"license":"Apache-2.0","goals":["everyday","coding"],"priority":5,"source":"https://ollama.com/library/gpt-oss:20b","description":"Efficient reasoning model; 16GB VRAM is a tight fit once context is included."},
+    {"id":"qwen3:1.7b","label":"Qwen 3 1.7B","downloadGB":1.4,"license":"Apache-2.0","goals":["lightweight"],"priority":1,"source":"https://ollama.com/library/qwen3:1.7b","description":"Small fallback for lower-memory PCs; simpler tasks suit it best."},
+    {"id":"qwen3.8:27b","label":"Qwen 3.8 27B","downloadGB":18,"license":"Apache-2.0","goals":["coding"],"priority":9,"source":"https://ollama.com/library/qwen3.8:27b","description":"Larger coding/reasoning option. Requires offloading on 16GB VRAM."}
+  ]
+}

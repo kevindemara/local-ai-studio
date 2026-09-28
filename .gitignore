@@ -1,0 +1,16 @@
+node_modules/
+data/
+projects/
+models/
+image-gen/
+*.log
+*.pid
+.env
+.env.*
+*.pem
+*.key
+app/test/artifacts/*
+!app/test/artifacts/.gitkeep
+screenshots/
+dist/
+*.tmp
