@@ -27,3 +27,5 @@
 @media(max-width:650px){.catalog-filters{grid-template-columns:1fr}.mcp-catalog-grid{grid-template-columns:1fr}.mcp-connect-panel{padding:14px}}
 
 .mcp-method-filter{max-width:300px;margin-top:12px}.mcp-connect-panel label[data-mcp-config],.mcp-connect-panel>label:not(.catalog-consent){display:grid;gap:6px;margin:14px 0}.mcp-connect-panel input[data-mcp-config]{width:100%}
+
+.repo-credit{display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:4px 0;color:var(--muted,#9698a6);font-size:11px;line-height:1.5;text-decoration:none}.repo-credit:hover{color:var(--mint,#b8e0ce);text-decoration:underline}.repo-credit:focus-visible{outline:2px solid var(--mint,#b8e0ce);outline-offset:4px;border-radius:3px}
