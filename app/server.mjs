@@ -481,7 +481,7 @@ const server = http.createServer(async (req, res) => {
       if(input.manualVramGiB!==undefined){if(!Number.isFinite(input.manualVramGiB)||input.manualVramGiB<0||input.manualVramGiB>512)throw new AppError('Enter dedicated VRAM between 0 and 512 GB.');state.settings.manualVramGiB=input.manualVramGiB;}
       if(typeof input.setupComplete==='boolean')state.settings.setupComplete=input.setupComplete;save();return json(res,state.settings);
     }
-    if (route === '/api/studio/install' && req.method === 'POST') {idle();const input=await body(req);if(!['ollama','git','gh'].includes(input.id))throw new AppError('Choose a supported prerequisite.');return json(res,studioJobs.start('install',`Install ${input.id}`,(signal,update)=>installPrerequisite(input.id,signal,update)),202);}
+    if (route === '/api/studio/install' && req.method === 'POST') {idle();const input=await body(req);if(!['ollama','git','gh','uv'].includes(input.id))throw new AppError('Choose a supported prerequisite.');return json(res,studioJobs.start('install',`Install ${input.id}`,(signal,update)=>installPrerequisite(input.id,signal,update)),202);}
     if (route === '/api/studio/ollama-start' && req.method === 'POST') {idle();const {spawn}=await import('node:child_process');const child=spawn(executable('ollama'),['serve'],{windowsHide:true,detached:true,stdio:'ignore'});child.on('error',()=>{});child.unref();return json(res,{ok:true});}
     if (route === '/api/studio/download' && req.method === 'POST') {
       idle();const input=await body(req),entry=catalog.models.find(m=>m.id===input.model);if(!entry)throw new AppError('Choose a model from the reviewed catalog.');
@@ -527,9 +527,9 @@ const server = http.createServer(async (req, res) => {
       idle();const input=await body(req),project=projectById(input.projectId),server=catalogServer(input.catalogId);
       if(input.confirmAccess!==true)throw new AppError('Review the server access and choose Connect to project.');
       const status=(await catalogStatus()).servers.find(s=>s.id===server.id);if(!status.ready)throw new AppError(status.missing.join(' '));
-      const entry=extensions.addCatalog(server.id,project,await serverEnvironment([server.requiredEnv,server.optionalEnv].filter(Boolean)));
+      const entry=extensions.addCatalog(server.id,project,await serverEnvironment([server.requiredEnv,server.optionalEnv].filter(Boolean)),input.configuration);
       return json(res,studioJobs.start('mcp-connect',`Connect ${server.name}`,async(signal,update)=>{
-        update({message:'Preparing the server and checking its tools. The first npm download may take up to two minutes.'});
+        update({message:server.oauth?'Complete browser sign-in and authorization in the window opened by the connector. This can take up to five minutes.':server.pythonPackage?'Preparing an isolated Python environment and checking tools. The first download can take up to five minutes.':'Preparing the server and checking its tools. The first npm download may take up to two minutes.'});
         return extensions.activateCatalog(entry,state.projects.map(p=>p.id),signal);
       }),202);
     }

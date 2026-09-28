@@ -45,7 +45,7 @@ These large assets are not installed by Setup.cmd and are not included in releas
 
 ### Common servers
 
-Plugins & MCP includes a searchable catalog. Select a project, click **Connect**, review the server's access, check the trust box and choose **Connect to project**. A background job downloads a pinned npm package where needed and discovers its tools. Failed/cancelled connections are disabled. Reconnect retries the same project connection instead of adding duplicates.
+Plugins & MCP includes a searchable catalog. Select a project, click **Connect**, review the server's access, check the trust box and choose **Connect to project**. Filter the 25 entries by category, name or connection type. A background job prepares the appropriate runtime or remote endpoint and discovers its tools. Browser sign-in entries show **Connect & sign in**. Failed/cancelled connections are disabled. Reconnect retries the same project connection instead of adding duplicates.
 
 | Server | Prerequisites and behavior |
 | --- | --- |
@@ -55,11 +55,37 @@ Plugins & MCP includes a searchable catalog. Select a project, click **Connect**
 | Playwright browser | Node/npm and installed Google Chrome. Uses a headless, temporary isolated profile. Discovery does not validate browser actions or provide OS/network isolation. |
 | Context7 | Node/npm and internet. Optional `CONTEXT7_API_KEY`. Sends documentation queries to Context7. |
 | GitHub repository tools | Running Docker plus `GITHUB_PERSONAL_ACCESS_TOKEN`. Official pinned container, read-only repos/issues/pull-request tools. Token permissions control accessible repositories, not the assigned project. GitHub CLI login does not supply this token. |
+| Web page fetch | uv/Python, no account. Converts pages to text; can reach local/internal addresses as well as public websites. |
+| Local Git tools | uv/Python and Git; initialize the selected project repository under GitHub & repos first. Can stage, commit and change branches directly. |
+| Time and time zones | uv/Python, no account. Local time and timezone conversion. |
+| Chrome DevTools | Node/npm and Chrome. Isolated headless profile; usage statistics, CrUX and update checks disabled. Discovery does not test browser actions. |
+| Tavily research | Node/npm and `TAVILY_API_KEY`; provider research/search/extraction requests. |
+| Firecrawl web extraction | Node/npm and `FIRECRAWL_API_KEY`; provider page extraction and crawling. |
+| MongoDB | Node/npm and `MDB_MCP_CONNECTION_STRING`; read-only mode, telemetry disabled. Use a read-only database role. |
+| PostgreSQL diagnostics | Community Crystal DBA server. uv/Python and `DATABASE_URI`; restricted read-only transactions. Also use a read-only database role. |
+| Supabase | `SUPABASE_ACCESS_TOKEN` plus required project reference. Hosted endpoint, project-scoped, read-only, database/docs feature groups. Use a narrowly scoped token. |
+| Notion | Node/npm, browser OAuth and a Notion account. Can read/write authorized workspace content. |
+| Figma | Node/npm, browser OAuth and a Figma account; provider plan/access limits apply. |
+| Linear | Node/npm, browser OAuth and a Linear account. Can read/write authorized work items. |
+| Sentry | Node/npm and browser OAuth. Optional organization/project slugs scope the endpoint; project requires organization. |
+| Jira & Confluence | Node/npm and browser OAuth; current Atlassian v2 endpoint. Organization administrators may need to allow the client. |
+| Neon Postgres | Node/npm and browser OAuth. Resource management tools can change projects/databases/branches and incur charges. |
+| Microsoft Learn | Public hosted endpoint; no account or extra runtime. Documentation and code samples. |
+| Cloudflare documentation | Public hosted endpoint; no account. Documentation access only, not account administration. |
+| Hugging Face Hub | Hosted endpoint with public tools; optional `HF_TOKEN` for account settings and configured Spaces. Review enabled tools at Hugging Face. |
 | Brave web search | Node/npm, internet plus `BRAVE_API_KEY`. Queries are sent to Brave; provider terms and limits apply. |
 
 For account keys, set the named variable in your user environment. On Windows: Start → Edit environment variables for your account → New, then click Recheck requirements. Catalog connections read these explicitly named Windows user variables again when connecting; no browser/server restart is required. On macOS/Linux, restart the Studio server from an environment containing the variable (closing only the browser does not stop a background server). Never paste keys into chats or manifests. Environment variables are not an encrypted credential vault. Only the necessary environment names are stored and only their referenced values are passed to the selected server. The catalog's Node/npm launcher also passes normal process-launch environment values and non-secret runtime settings; npm lifecycle scripts are disabled.
 
 Catalog configurations belong to one project and cannot be reassigned to a different folder. Connect a separate instance for another project. Other local programs may still access files as your user: project assignment is not an OS sandbox. Packages are downloaded from npm on first connection and can require internet; their dependency graph is not a fully reproducible lockfile.
+
+### Python tools and browser sign-in
+
+Python entries run pinned PyPI packages in isolated environments using `uv tool run`. The MCP Python SDK is constrained to its compatible 1.x line. Windows setup offers **Install uv for Python tools** through the official WinGet package `astral-sh.uv`; Studio detects its installed location without requiring a terminal restart. On other systems use the linked [official uv installation guide](https://docs.astral.sh/uv/getting-started/installation/). Initial Python downloads may take five minutes.
+
+Browser sign-in uses the third-party [mcp-remote bridge](https://github.com/punkpeye/mcp-remote), pinned to 0.14.3. Complete the provider's browser authorization within five minutes; Cancel ends the connection attempt. Tokens and registration data are cached in `mcp-auth/<project-id>/<server-id>` inside Studio's private user data directory. This is a file cache, not an encrypted vault. Protect that directory and backups; never publish them. Disable/Remove closes Studio's client and removes tool access but does not revoke the provider grant or erase its credential cache. Revoke authorization at the provider to end that grant. Account keys are resolved at connection time; remote bearer values are sent in HTTP headers, never persisted in URLs, command arguments or connection metadata.
+
+Supabase project references and Sentry slugs are non-secret configuration fields. To change them, disable the existing connection, then reconnect with new settings. Existing connections to other projects remain separate. Cloud tool access is determined by provider authorization; assigning a Studio project does not narrow a cloud account unless the connector explicitly implements provider-side scoping. Provider limits, paid plans and usage charges can apply.
 
 ### Custom servers
 

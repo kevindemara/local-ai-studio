@@ -1,0 +1,275 @@
+// Provider configuration reviewed 2026-09-28. Keys are environment references only.
+export const additionalServers = [
+  {
+    "id": "fetch",
+    "name": "Web page fetch",
+    "publisher": "MCP reference servers",
+    "category": "Web",
+    "description": "Read a web page and convert its content to text.",
+    "access": "Can request public websites and addresses reachable from this computer, including local services.",
+    "source": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
+    "pythonPackage": "mcp-server-fetch==2026.8.18",
+    "bin": "mcp-server-fetch",
+    "requirements": "uv (Python tool manager) and internet access. First connection downloads an isolated Python environment."
+  },
+  {
+    "id": "git",
+    "name": "Local Git tools",
+    "publisher": "MCP reference servers",
+    "category": "GitHub",
+    "description": "Inspect diffs, history and branches; stage and commit files.",
+    "access": "Can change local Git repositories as your user. Starts with this project; repository tool arguments are not a filesystem sandbox.",
+    "source": "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
+    "pythonPackage": "mcp-server-git==2026.8.18",
+    "bin": "mcp-server-git",
+    "requirements": "uv (Python tool manager) and internet access. First connection downloads an isolated Python environment. Git must also be installed and the project must have its own initialized repository."
+  },
+  {
+    "id": "time",
+    "name": "Time and time zones",
+    "publisher": "MCP reference servers",
+    "category": "Planning",
+    "description": "Check the current time and convert between time zones.",
+    "access": "Reads the system time and timezone; no account or cloud service is required.",
+    "source": "https://github.com/modelcontextprotocol/servers/tree/main/src/time",
+    "pythonPackage": "mcp-server-time==2026.8.18",
+    "bin": "mcp-server-time",
+    "requirements": "uv (Python tool manager) and internet access. First connection downloads an isolated Python environment."
+  },
+  {
+    "id": "chrome-devtools",
+    "name": "Chrome DevTools",
+    "publisher": "Chrome DevTools team",
+    "category": "Browser",
+    "description": "Inspect a website, debug network requests and measure browser performance.",
+    "access": "Can visit and interact with sites in an isolated temporary Chrome profile. Usage statistics and CrUX reporting are disabled.",
+    "source": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
+    "package": "chrome-devtools-mcp@1.10.1",
+    "bin": "chrome-devtools-mcp",
+    "extra": [
+      "--headless",
+      "--isolated",
+      "--no-usage-statistics",
+      "--no-performance-crux"
+    ],
+    "requirements": "Node.js, npm and Google Chrome. Tool discovery alone does not test browser actions."
+  },
+  {
+    "id": "tavily",
+    "name": "Tavily research",
+    "publisher": "Tavily",
+    "category": "Search",
+    "description": "Search, extract pages and research public web information.",
+    "access": "Sends queries and page URLs to Tavily. API usage may incur provider charges.",
+    "source": "https://github.com/tavily-ai/tavily-mcp",
+    "package": "tavily-mcp@0.2.22",
+    "bin": "tavily-mcp",
+    "requiredEnv": "TAVILY_API_KEY",
+    "accountUrl": "https://app.tavily.com/",
+    "requirements": "Node.js, npm and TAVILY_API_KEY in your environment."
+  },
+  {
+    "id": "firecrawl",
+    "name": "Firecrawl web extraction",
+    "publisher": "Firecrawl",
+    "category": "Web",
+    "description": "Scrape, map and extract structured information from websites.",
+    "access": "Sends URLs and extraction requests to Firecrawl. Provider usage limits and charges apply.",
+    "source": "https://github.com/firecrawl/firecrawl-mcp-server",
+    "package": "firecrawl-mcp@3.25.5",
+    "bin": "firecrawl-mcp",
+    "requiredEnv": "FIRECRAWL_API_KEY",
+    "accountUrl": "https://www.firecrawl.dev/app/api-keys",
+    "requirements": "Node.js, npm and FIRECRAWL_API_KEY in your environment."
+  },
+  {
+    "id": "mongodb",
+    "name": "MongoDB",
+    "publisher": "MongoDB",
+    "category": "Databases",
+    "description": "Inspect MongoDB collections and query data with read-only tools.",
+    "access": "Uses read-only server mode. The connection string determines the databases available; use a database account with read-only permissions.",
+    "source": "https://github.com/mongodb-js/mongodb-mcp-server",
+    "package": "mongodb-mcp-server@3.0.4",
+    "bin": "mongodb-mcp-server",
+    "requiredEnv": "MDB_MCP_CONNECTION_STRING",
+    "accountUrl": "https://www.mongodb.com/docs/atlas/connect-your-application/",
+    "requirements": "Node.js, npm and a database URI in MDB_MCP_CONNECTION_STRING. Telemetry is disabled."
+  },
+  {
+    "id": "postgres",
+    "name": "PostgreSQL diagnostics",
+    "publisher": "Crystal DBA (community)",
+    "category": "Databases",
+    "description": "Inspect schema, query plans and PostgreSQL data.",
+    "access": "Runs in restricted mode using read-only transactions. Also use a read-only database role; the database URI determines access.",
+    "source": "https://github.com/crystaldba/postgres-mcp",
+    "pythonPackage": "postgres-mcp==0.3.0",
+    "bin": "postgres-mcp",
+    "extra": [
+      "--access-mode=restricted"
+    ],
+    "requiredEnv": "DATABASE_URI",
+    "accountUrl": "https://www.postgresql.org/docs/current/libpq-connect.html",
+    "requirements": "uv (Python tool manager) and internet access. First connection downloads an isolated Python environment. Set DATABASE_URI to your PostgreSQL connection string."
+  },
+  {
+    "id": "supabase",
+    "name": "Supabase",
+    "publisher": "Supabase",
+    "category": "Databases",
+    "description": "Read database information and Supabase documentation for one project.",
+    "access": "Scopes the endpoint to your supplied Supabase project reference, enables read-only mode and exposes database and documentation tools only.",
+    "source": "https://supabase.com/docs/guides/ai-tools/mcp",
+    "url": "https://mcp.supabase.com/mcp",
+    "requiredEnv": "SUPABASE_ACCESS_TOKEN",
+    "bearerEnv": "SUPABASE_ACCESS_TOKEN",
+    "fields": [
+      {
+        "name": "projectRef",
+        "label": "Supabase project reference",
+        "required": true,
+        "hint": "Project ID from your Supabase project settings; letters and numbers only.",
+        "pattern": "^[a-z0-9]{8,64}$"
+      }
+    ],
+    "accountUrl": "https://supabase.com/dashboard/account/tokens",
+    "requirements": "Internet access, a scoped personal access token in SUPABASE_ACCESS_TOKEN and your Supabase project reference."
+  },
+  {
+    "id": "notion",
+    "name": "Notion",
+    "publisher": "Notion",
+    "category": "Productivity",
+    "description": "Search workspace pages and work with documents.",
+    "access": "Can read and update workspace content permitted by your Notion authorization.",
+    "source": "https://developers.notion.com/guides/mcp/get-started-with-mcp",
+    "url": "https://mcp.notion.com/mcp",
+    "oauth": true,
+    "package": "mcp-remote@0.14.3",
+    "bin": "mcp-remote",
+    "requirements": "Node.js, npm, internet access and a provider account. Connect opens browser sign-in; complete authorization within five minutes."
+  },
+  {
+    "id": "figma",
+    "name": "Figma",
+    "publisher": "Figma",
+    "category": "Design",
+    "description": "Read design context, components and layout information for implementation.",
+    "access": "Receives design queries and provides the tools allowed by your Figma account and plan.",
+    "source": "https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/",
+    "url": "https://mcp.figma.com/mcp",
+    "oauth": true,
+    "package": "mcp-remote@0.14.3",
+    "bin": "mcp-remote",
+    "requirements": "Node.js, npm, internet access and a provider account. Connect opens browser sign-in; complete authorization within five minutes."
+  },
+  {
+    "id": "linear",
+    "name": "Linear",
+    "publisher": "Linear",
+    "category": "Productivity",
+    "description": "Find and manage issues, projects and planning documents.",
+    "access": "Can read and modify work items allowed by your Linear authorization.",
+    "source": "https://linear.app/docs/mcp",
+    "url": "https://mcp.linear.app/mcp",
+    "oauth": true,
+    "package": "mcp-remote@0.14.3",
+    "bin": "mcp-remote",
+    "requirements": "Node.js, npm, internet access and a provider account. Connect opens browser sign-in; complete authorization within five minutes."
+  },
+  {
+    "id": "sentry",
+    "name": "Sentry",
+    "publisher": "Sentry",
+    "category": "Monitoring",
+    "description": "Search errors and performance data; investigate and triage issues.",
+    "access": "Can read errors and manage issues allowed by your authorization. Optional organization and project fields narrow the endpoint scope.",
+    "source": "https://mcp.sentry.dev/",
+    "url": "https://mcp.sentry.dev/mcp",
+    "oauth": true,
+    "package": "mcp-remote@0.14.3",
+    "bin": "mcp-remote",
+    "requirements": "Node.js, npm, internet access and a provider account. Connect opens browser sign-in; complete authorization within five minutes.",
+    "fields": [
+      {
+        "name": "organization",
+        "label": "Sentry organization",
+        "required": false,
+        "hint": "Optional account slug from the Sentry URL.",
+        "pattern": "^[a-z0-9_-]{1,100}$"
+      },
+      {
+        "name": "project",
+        "label": "Sentry project",
+        "required": false,
+        "hint": "Optional account slug from the Sentry URL.",
+        "pattern": "^[a-z0-9_-]{1,100}$"
+      }
+    ]
+  },
+  {
+    "id": "atlassian",
+    "name": "Jira & Confluence",
+    "publisher": "Atlassian",
+    "category": "Productivity",
+    "description": "Search and manage Jira work items and Confluence content.",
+    "access": "Can read and change content permitted by your Atlassian account. Administrators may need to allow this client.",
+    "source": "https://support.atlassian.com/atlassian-ai-gateway/docs/how-to-upgrade-from-atlassian-mcp-v1-to-atlassian-mcp-v2/",
+    "url": "https://mcp.atlassian.com/v2/mcp",
+    "oauth": true,
+    "package": "mcp-remote@0.14.3",
+    "bin": "mcp-remote",
+    "requirements": "Node.js, npm, internet access and a provider account. Connect opens browser sign-in; complete authorization within five minutes."
+  },
+  {
+    "id": "neon",
+    "name": "Neon Postgres",
+    "publisher": "Neon",
+    "category": "Databases",
+    "description": "Inspect databases and manage development branches and projects.",
+    "access": "Can create or change Neon resources permitted by your authorization. Resource operations may incur provider charges.",
+    "source": "https://neon.com/guides/neon-mcp-server-github-copilot-vs-code",
+    "url": "https://mcp.neon.tech/mcp",
+    "oauth": true,
+    "package": "mcp-remote@0.14.3",
+    "bin": "mcp-remote",
+    "requirements": "Node.js, npm, internet access and a provider account. Connect opens browser sign-in; complete authorization within five minutes."
+  },
+  {
+    "id": "microsoft-learn",
+    "name": "Microsoft Learn",
+    "publisher": "Microsoft",
+    "category": "Documentation",
+    "description": "Search Microsoft documentation and retrieve technical reference pages.",
+    "access": "Sends documentation queries to Microsoft; no account key is required.",
+    "source": "https://learn.microsoft.com/en-us/training/support/mcp",
+    "url": "https://learn.microsoft.com/api/mcp",
+    "requirements": "Internet access. No extra runtime or account is required."
+  },
+  {
+    "id": "cloudflare-docs",
+    "name": "Cloudflare documentation",
+    "publisher": "Cloudflare",
+    "category": "Documentation",
+    "description": "Find Cloudflare platform documentation and examples.",
+    "access": "Sends documentation queries to Cloudflare; does not connect to or modify your Cloudflare account.",
+    "source": "https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/",
+    "url": "https://docs.mcp.cloudflare.com/mcp",
+    "requirements": "Internet access. No extra runtime or account is required."
+  },
+  {
+    "id": "huggingface",
+    "name": "Hugging Face Hub",
+    "publisher": "Hugging Face",
+    "category": "AI resources",
+    "description": "Explore models, datasets, papers, documentation and configured Spaces.",
+    "access": "Sends queries to Hugging Face. An optional token enables your account tools and configured Spaces; these may change resources or incur charges.",
+    "source": "https://huggingface.co/docs/hub/agents-mcp",
+    "url": "https://huggingface.co/mcp",
+    "optionalEnv": "HF_TOKEN",
+    "bearerEnv": "HF_TOKEN",
+    "accountUrl": "https://huggingface.co/settings/mcp",
+    "requirements": "Internet access. Optional HF_TOKEN for your account tools; review enabled tools in your Hugging Face MCP settings."
+  }
+];
