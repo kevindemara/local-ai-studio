@@ -50,6 +50,15 @@ test('local API rejects foreign origins, host spoofing, and missing session toke
   });
   assert.equal(spoofed, 403);
 });
+
+test('MCP catalog connect API requires explicit access review before creating a connection', async () => {
+  const bootstrap=await request('/api/state'),selected=bootstrap.data.projects[0];
+  const before=(await request('/api/studio/extensions')).data;
+  const result=await request('/api/studio/extensions/connect',{catalogId:'memory',projectId:selected.id});
+  assert.equal(result.status,400);assert.match(result.data.error,/Review/);
+  assert.equal((await request('/api/studio/extensions')).data.length,before.length);
+  assert.equal((await request('/api/studio/extensions/catalog',undefined,'GET',{'X-Local-Token':''})).status,403);
+});
 test('projects and chats retain their configuration on disk', async () => {
   let result = await request('/api/projects', { name: 'Integration fixture', folder, instructions: 'Explain this fixture.' });
   assert.equal(result.status, 201); projectId = result.data.id;

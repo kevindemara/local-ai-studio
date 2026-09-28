@@ -18,6 +18,7 @@ import { requestProjectAPI } from './project-runtime.mjs';
 import { catalog, detectHardware, recommendations } from './hardware.mjs';
 import { StudioJobs, prerequisites, installPrerequisite, pullModel, executable } from './studio-jobs.mjs';
 import { Extensions } from './extensions.mjs';
+import { catalogStatus, catalogServer, serverEnvironment } from './mcp-catalog.mjs';
 import * as github from './github-workflows.mjs';
 import { usageOverview, diagnosticReport } from './insights.mjs';
 
@@ -77,7 +78,7 @@ state.changes ||= [];
 state.checkpoints ||= [];
 state.settings ||= { setupComplete:false, contextTokens:8192 };
 const studioJobs = new StudioJobs(state,save,()=>setTimeout(()=>void queue.pump(),25));
-const extensions = new Extensions(state,save,ROOT);
+const extensions = new Extensions(state,save,ROOT,DATA);
 let hardwareCache;
 async function hardware() { hardwareCache ||= await detectHardware(DATA);const result=structuredClone(hardwareCache);result.availableRamGiB=os.freemem()/1024**3;
   if(state.settings.manualVramGiB && result.gpus.some(g=>g.confidence==='unknown')){const gpu=result.gpus.find(g=>g.confidence==='unknown');gpu.memoryGiB=state.settings.manualVramGiB;gpu.confidence='user supplied';}return result; }
@@ -521,6 +522,17 @@ const server = http.createServer(async (req, res) => {
       if(action==='changelog'){const entry=github.changelogEntry(input);if(!input.save)return json(res,{entry});ensureProjectFolder(project);let old='';try{old=safeFile(project,'CHANGELOG.md').content;}catch{}const content=old?old.replace(/^# Changelog\s*/,'# Changelog\n\n'+entry):'# Changelog\n\n'+entry;const file=trackedWrite(project,'CHANGELOG.md',content,path.join(DATA,'backups',project.id));project.changelogTemplate=String(input.template||'').slice(0,6000);save();return json(res,{entry,file});}
     }
     if(route==='/api/studio/extensions'&&req.method==='GET')return json(res,state.extensions);
+    if(route==='/api/studio/extensions/catalog'&&req.method==='GET')return json(res,await catalogStatus());
+    if(route==='/api/studio/extensions/connect'&&req.method==='POST'){
+      idle();const input=await body(req),project=projectById(input.projectId),server=catalogServer(input.catalogId);
+      if(input.confirmAccess!==true)throw new AppError('Review the server access and choose Connect to project.');
+      const status=(await catalogStatus()).servers.find(s=>s.id===server.id);if(!status.ready)throw new AppError(status.missing.join(' '));
+      const entry=extensions.addCatalog(server.id,project,await serverEnvironment([server.requiredEnv,server.optionalEnv].filter(Boolean)));
+      return json(res,studioJobs.start('mcp-connect',`Connect ${server.name}`,async(signal,update)=>{
+        update({message:'Preparing the server and checking its tools. The first npm download may take up to two minutes.'});
+        return extensions.activateCatalog(entry,state.projects.map(p=>p.id),signal);
+      }),202);
+    }
     if(route==='/api/studio/extensions'&&req.method==='POST'){idle();return json(res,extensions.add(await body(req)),201);}
     if(route==='/api/studio/extensions/example'&&req.method==='POST'){idle();return json(res,extensions.example(),201);}
     const extensionMatch=route.match(/^\/api\/studio\/extensions\/([^/]+)(?:\/(inspect|permissions))?$/);

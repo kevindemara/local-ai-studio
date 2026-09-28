@@ -1,15 +1,19 @@
 {
   "name": "local-ai-studio",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "description": "A local AI workspace with hardware-aware setup, connected project files, GitHub and MCP",
   "license": "MIT",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node app/server.mjs",
     "launch": "node scripts/launch.mjs",
     "test": "node --test app/test/*.test.mjs"
   },
-  "dependencies": { "@modelcontextprotocol/client": "2.1.0" }
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.1.0"
+  }
 }
