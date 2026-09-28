@@ -23,6 +23,20 @@ For a clean background stop, issue the authenticated local `/api/server-stop` ac
 
 ## Backups
 
+### Workspace recovery
+
+In **Updates & backups**, Create workspace backup saves source files from managed and linked projects, chats, plans, settings, change backups and checkpoints under `LOCAL_AI_DATA_DIR/snapshots`. Each completed snapshot has a manifest with SHA-256 checksums. The current limits are 20,000 files, 2 GB total and 100 MB per file. Git repositories, dependencies and common build caches are excluded; symlinks/junctions are skipped and reported. Backups may include project secrets such as `.env` files; they stay local and are not encrypted. OAuth and GitHub credential stores and Ollama weights are not copied.
+
+Recovery creates a backup of the current workspace, verifies every selected snapshot file, and restores projects under new `recovered` folders. It switches project metadata to those copies and leaves existing project folders intact. Queued/running requests become interrupted, and MCP connections must be re-enabled after reviewing access to the recovered folders. Dependencies need reinstalling and previews need restarting. Studio never overwrites a linked repository as part of recovery. Failed or cancelled snapshots are not listed as complete recovery points.
+
+### Application updates
+
+Preview includes prereleases; Stable excludes them. Automatic checks contact the official GitHub releases API at startup and every six hours and can be disabled. Installation is an explicit idle action. It checks the release digest, rejects escaped/oversized archive paths, creates a workspace backup and prepares dependencies using `npm ci --ignore-scripts` in a separate `app-releases` folder. Release ZIPs are not publisher-signed packages.
+
+Extracted installs can restart into the prepared release. The launcher records the active version separately in user data and follows it on the next launch. A failed startup health check relaunches the previous app; workspace recovery points remain available if a newer version changed metadata. The previous source folder is retained, so it can also be launched manually. Developer Git checkouts do not follow this pointer or switch themselves; use Git to update source or launch a prepared release separately.
+
+### Full manual backup
+
 Stop Studio and copy its entire data directory to a trusted local backup location. This includes workspace.json, generated managed projects, change backups and checkpoints. **Linked external project folders must be backed up separately.** Restart with the original data directory, or set LOCAL_AI_DATA_DIR to the restored copy.
 
 Workspace data includes prompts and file/tool output. Diagnostic exports intentionally omit chats, project names, source paths, auth tokens and server arguments. Do not upload workspace.json or runtime logs as a routine bug report.

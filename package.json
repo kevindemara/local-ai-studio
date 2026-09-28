@@ -1,6 +1,6 @@
 {
   "name": "local-ai-studio",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "A local AI workspace with hardware-aware setup, connected project files, GitHub and MCP",
@@ -9,11 +9,13 @@
     "node": ">=22"
   },
   "scripts": {
+    "pretest": "node scripts/check.mjs",
     "start": "node app/server.mjs",
     "launch": "node scripts/launch.mjs",
     "test": "node --test app/test/*.test.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/client": "2.1.0"
+    "@modelcontextprotocol/client": "2.1.0",
+    "fflate": "0.8.3"
   }
 }

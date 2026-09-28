@@ -42,6 +42,13 @@ async function request(route, data, method, headers = {}) {
 before(async () => { const socket = net.createServer(); socket.listen(0, '127.0.0.1'); await once(socket, 'listening'); port = socket.address().port; await new Promise(resolve => socket.close(resolve)); await start(); });
 after(stop);
 
+test('inline editor refuses stale saves and guided plans survive project reloads',async()=>{
+  const p=(await request('/api/projects',{name:'Guided test'})).data;await request(`/api/projects/${p.id}/scaffold`,{template:'static'});const original=(await request(`/api/projects/${p.id}/file?path=index.html`)).data;
+  assert.match(original.revision,/^[a-f\d]{64}$/);assert.equal((await request(`/api/projects/${p.id}/file`,{path:'index.html',content:'new',expectedRevision:original.revision})).status,200);
+  assert.equal((await request(`/api/projects/${p.id}/file`,{path:'index.html',content:'stale',expectedRevision:original.revision})).status,409);assert.equal((await request(`/api/projects/${p.id}/file?path=index.html`)).data.content,'new');
+  assert.equal((await request(`/api/projects/${p.id}`,{kickoffPrompt:'Build connected pages'},'PATCH')).data.kickoffPrompt,'Build connected pages');assert.equal((await request('/api/studio/kickoff',{name:'Demo',goal:'A useful website'})).status,200);assert.equal((await request('/api/studio/kickoff',{name:'Demo'})).status,500);
+});
+
 test('local API rejects foreign origins, host spoofing, and missing session tokens', async () => {
   assert.equal((await request('/api/projects', { name: 'Blocked' }, 'POST', { 'X-Local-Token': '' })).status, 403);
   assert.equal((await request('/api/state', undefined, 'GET', { Origin: 'https://untrusted.example' })).status, 403);

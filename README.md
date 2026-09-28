@@ -1,8 +1,13 @@
-# Local AI Studio
+<h1>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/svg/local-ai-studio-logo-dark.svg">
+  <img src="docs/brand/svg/local-ai-studio-logo-light.svg" alt="Local AI Studio" width="420">
+</picture>
+</h1>
 
 A local workspace for people who want AI to **build real projects**, not just paste code into a chat. Choose an Ollama model, describe a website or app, and review connected files, checks, previews and version history in one place.
 
-**Public preview · Windows installer · Node.js 22+ · MIT**
+**0.3 preview · Windows installer · Node.js 22+ · MIT**
 
 ![History and measured token usage from a local test project](docs/images/studio-history.png)
 
@@ -11,7 +16,7 @@ A local workspace for people who want AI to **build real projects**, not just pa
 1. Download the [latest release](https://github.com/kevindemara/local-ai-studio/releases) ZIP and extract it into a folder you want to keep. Source ZIP downloads also work.
 2. Double-click **Setup.cmd**. A setup window explains what will be installed and offers a desktop shortcut.
 3. The browser wizard checks CPU, GPU, RAM, storage and required tools. Install missing tools, start Ollama, then choose a model.
-4. Add a project and use **Build** mode. Try: “Build a responsive plumber website with connected HTML, CSS and JavaScript. Verify it and start the preview.”
+4. Add a project. The kickoff wizard asks for its goal, pages/features and visual style, then lets you edit the build plan. Create the starter and choose **Build this plan** when ready. Choose **Use an existing folder** to work on an existing project.
 
 If Windows marks extracted scripts as downloaded, review the source and use the file’s Properties → Unblock, or the documented PowerShell `Unblock-File` command. Studio does not bypass system security settings. Keep the extracted folder: the shortcut launches the app from there.
 
@@ -43,6 +48,24 @@ The wizard reserves memory for the runtime and context. A model’s download siz
 | Linux | Install Node.js 22+ and Ollama using official packages, then `sh setup.sh` | CPU/RAM, NVIDIA measured VRAM, other adapter names when lspci is available |
 
 Windows was exercised on a real 16GB NVIDIA system. macOS/Linux support is implemented and CI covers platform-independent workflows; GPU compatibility still depends on the [current Ollama hardware support matrix](https://docs.ollama.com/gpu), drivers and available memory. This release does not install GPU drivers or promise compatibility with every GPU. Non-Windows prerequisite installation is guided rather than automatic.
+
+## Working in the 0.3 workspace
+
+- **Build workspace:** keep projects, a file tree, inline editor, live preview and chat together. Drag the tree/chat dividers or use their arrow keys; widths are remembered. Switch back to Chat layout anytime. On phones, the editor and file tree stack below chat.
+- **Editor:** click a source file, edit it, and Save or press Ctrl/Cmd S. Optional autosave waits until the model is idle. Saves retain the previous file version and refuse to overwrite a file changed since it was opened. Unsaved drafts are kept for the browser session; switching projects asks whether to save or discard them.
+- **Preview and output:** start the actual local preview, enable Split to keep it beside the editor, or select Output to see task output and run project checks. Static websites work immediately; app starters may need their dependencies installed first.
+- **Build progress:** Prepare, Create files, Check and Preview reflect recorded work. Passing checks and a ready preview are shown only after tool results confirm them. View activity opens the run log; completed setup actions live in a collapsed Recent activity drawer.
+- **Recovery:** failed builds offer relevant actions such as starting Ollama, unloading models, choosing a smaller installed model or using 4K reply context. Continue saved work inspects existing files before resuming. A CUDA initialization error may still need an Ollama/driver update; a recovery button cannot guarantee a driver fix.
+
+## Updates and backups
+
+Open **Updates & backups** in the sidebar. Studio checks the official GitHub releases at startup and every six hours; automatic checks can be disabled. Choose Preview or Stable releases. Updates are never installed automatically while you are working.
+
+For extracted release installs, **Install update when idle** backs up the workspace, downloads the release, verifies its SHA-256 digest against GitHub metadata and installs dependencies into a separate version folder. **Restart into prepared version** activates it, and the existing desktop launcher follows the selected version. If the new server fails its startup health check, the previous app is relaunched. The old installation remains available. These source archives are checksum-verified, **not publisher-signed desktop packages**.
+
+Developer Git checkouts use **Prepare release** and remain under Git control: update source with Git or launch the prepared release separately. Studio does not replace your checkout or local changes.
+
+**Create workspace backup** saves project source files, chats, settings and file history locally. Recovery verifies file checksums and opens recovered projects in separate folders, leaving original project folders intact. It creates a backup before recovery and disables MCP access until you reconnect. Dependency folders, Git history, model weights and OAuth/GitHub credential stores are excluded. Backups can contain private project files and are not encrypted. Details and limits are in [configuration](docs/CONFIGURATION.md#workspace-recovery).
 
 ## Developer start
 
