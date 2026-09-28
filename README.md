@@ -4,6 +4,8 @@ A local workspace for people who want AI to **build real projects**, not just pa
 
 **Public preview · Windows installer · Node.js 22+ · MIT**
 
+![History and measured token usage from a local test project](docs/images/studio-history.png)
+
 ## Get started on Windows
 
 1. Download the [latest release](https://github.com/kevindemara/local-ai-studio/releases) ZIP and extract it into a folder you want to keep. Source ZIP downloads also work.

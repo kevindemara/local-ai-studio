@@ -21,7 +21,7 @@ test('16GB recommendations reserve runtime memory and never combine independent 
 });
 test('small CPU PCs and unified-memory Macs receive different fit estimates',()=>{
   const cpu=recommendations({ramGiB:8,gpus:[]},'lightweight');assert.equal(cpu[0].id,'qwen3:1.7b');assert.equal(cpu[0].fit,'cpu');assert.equal(cpu.find(m=>m.id==='qwen3.8:27b').fit,'insufficient');
-  const mac=recommendations({ramGiB:24,gpus:[{memoryGiB:24}],unified:true});assert.equal(mac.find(m=>m.id==='gemma4:12b').fit,'good');assert.equal(mac.find(m=>m.id==='qwen3.8:27b').fit,'cpu');
+  const mac=recommendations({ramGiB:24,gpus:[{memoryGiB:24}],unified:true});assert.equal(mac.find(m=>m.id==='gemma4:12b').fit,'good');assert.equal(mac.find(m=>m.id==='qwen3.8:27b').fit,'insufficient');
 });
 test('plugin manifests reject credential URLs, invalid executable arguments and secret values',()=>{
   assert.throws(()=>validateExtension({name:'Bad',transport:'http',url:'http://example.com/mcp'}));

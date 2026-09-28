@@ -20,7 +20,7 @@ export function recommendations(hardware, goal = 'coding') {
     const weightsGiB = m.downloadGB * 1e9 / GiB;
     const workingGiB = weightsGiB + Math.max(1, weightsGiB * .12);
     const gpuFit = usable >= workingGiB;
-    const ramFit = ram - 5 >= workingGiB;
+    const ramFit = ram - (hardware.unified ? 8 : 5) >= workingGiB;
     const fit = gpuFit ? 'good' : ramFit ? 'cpu' : 'insufficient';
     const reason = gpuFit ? 'Fits with room for the runtime and a modest context.' : ramFit ? 'Uses system RAM; CPU or partial GPU loading can be much slower.' : 'Not enough detected memory. Choose a smaller model.';
     return {...m, weightsGiB, workingGiB, fit, reason, score: (fit==='good'?100:fit==='cpu'?30:0)+(m.goals.includes(goal)?15:0)+(m.priority||0)};
