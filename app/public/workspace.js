@@ -80,3 +80,4 @@ async function refreshInlineFile(){if(!opened||dirty||editorSaving||fileRefreshi
 if(state)ready();else document.addEventListener('studio-ready',ready,{once:true});
 setInterval(()=>{updateDevelopment();void refreshInlinePreview();void refreshInlineFile();if($('inline-autosave').checked&&dirty&&!busy&&!editorSaving)void saveInline();},3000);
 setInterval(async()=>{try{const m=await api('/studio/maintenance');$('update-badge').hidden=!m.update?.available;}catch{}},60000);
+export {resolveDraft};

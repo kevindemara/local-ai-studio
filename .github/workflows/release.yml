@@ -15,4 +15,4 @@ jobs:
       - run: node scripts/package.mjs
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --verify-tag --title "Local AI Studio $GITHUB_REF_NAME" --notes-file CHANGELOG.md
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --verify-tag --prerelease --title "Local AI Studio $GITHUB_REF_NAME" --notes-file CHANGELOG.md

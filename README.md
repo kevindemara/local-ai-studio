@@ -7,9 +7,9 @@
 
 A local workspace for people who want AI to **build real projects**, not just paste code into a chat. Choose an Ollama model, describe a website or app, and review connected files, checks, previews and version history in one place.
 
-**0.3 preview · Windows installer · Node.js 22+ · MIT**
+**0.4 preview · Windows installer · Node.js 22+ · MIT**
 
-![History and measured token usage from a local test project](docs/images/studio-history.png)
+![Project hub with reusable prompts and the new project tools](docs/images/studio-project-hub.png)
 
 ## Get started on Windows
 
@@ -32,6 +32,12 @@ No Docker, cloud account or paid model subscription is required. Internet is nee
 - **Customize changelogs:** preview a release entry using `{version}`, `{date}` and `{summary}`, then save it as a reviewed project change.
 - **Connect common MCP servers:** browse 25 servers including Notion, Figma, Linear, Jira/Confluence, Sentry, Supabase, MongoDB, PostgreSQL, Neon, Hugging Face, web research, browser testing and documentation. Filter by category or connection type. Connect buttons show access and prerequisites, prepare pinned npm/Python servers or remote endpoints, discover tools and enable the selected project. Browser sign-in providers use a pinned OAuth bridge; account-key providers have environment setup guidance. Custom manifests, local stdio, Streamable HTTP and a bundled example are also supported.
 - **See history and usage:** actual input/output token graphs, project overviews, filtered run history, expandable tool/terminal records and a diagnostic export that excludes chats and file paths.
+- **Use Project hub:** a task board linked to real builds, local knowledge documents with reference excerpts, a context inspector with source exclusions, and reusable prompts with variables/slash commands.
+- **Control model edits:** optional review-before-save proposals, original/proposed contents, per-file approval/rejection, stale-file protection and decision history.
+- **Tune and compare models:** separate Ask/Plan/Build profiles, optional model routing, and serial two-model comparisons with actual responses and measured token speed.
+- **Find and share work:** full conversation-content search, a Ctrl/Cmd K command palette for files/projects/tools/prompts, and checksum-verified source-only project ZIP export/import.
+
+See the [Project hub guide](docs/PROJECT-HUB.md) for workflows and limits, and the [20-feature research and selection](docs/FEATURE-RESEARCH.md) for what shipped and what remains a candidate.
 
 Image generation is optional and requires a separately installed compatible local image engine. Model vision support does **not** mean image generation. See [configuration](docs/CONFIGURATION.md).
 

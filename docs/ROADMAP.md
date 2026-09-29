@@ -1,14 +1,16 @@
 # Roadmap
 
-## Available in 0.3 preview
+## Available in 0.4 preview
 
 Hardware-aware onboarding; Windows prerequisite installation; 11 searchable free-model choices; automatic installed-model discovery; real project files and repairs; unified editor/preview/chat workspace; reviewed project kickoff plans; recorded build progress and recovery actions; previews/API checks; recoverable changes/checkpoints; durable runs/forks; GitHub account/repository workflows; changelog templates; 25 guided common-MCP connections; measured token history and diagnostic exports; local workspace backups/recovery; release channels and checksum-verified side-by-side updates for extracted installs.
 
+Project hub adds local knowledge/excerpts, context selection controls, edit proposals/approval, reusable prompts, per-mode model profiles/routing, serial response comparisons, portable source bundles, full chat search, command navigation and a task board. See the [twenty-feature selection](FEATURE-RESEARCH.md) and [usage guide](PROJECT-HUB.md).
+
 ## Next milestones
 
-- Reliable model capability/speed comparisons on real hardware and broader AMD/Intel/Apple validation.
-- Document knowledge with source citations and improved context selection.
-- Portable project import/export, encrypted backups and backup retention controls.
+- Model correctness/native-tool benchmarks and broader AMD/Intel/Apple validation beyond the included serial response/speed comparisons.
+- Semantic document retrieval and richer PDF/DOCX parsing beyond the included text knowledge library.
+- Encrypted backups and backup retention controls beyond source-only project sharing.
 - Isolated code execution profiles and browser verification.
 - Accessibility/theme/localization work and broader extension discovery, provenance and updates.
 - Signed desktop installers and verified publisher signatures, plus fully guided prerequisite installation on macOS/Linux.
