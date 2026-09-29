@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.3 — 2026-09-29
+
+- Fixed Qwen continuations after large project reads: file excerpts are bounded, context checkpoints now follow the selected model's context size, and the latest user request remains the final message sent to Ollama.
+- Checkpoints retain a short read excerpt and the next line number so an interrupted build can continue from saved files without repeatedly rereading the same large source.
+
 ## 0.5.2 — 2026-09-29
 
 - Replaced the separate Windows folder dialog with an in-app folder browser, so project folder selection cannot leave Choose disabled behind a hidden native window. Includes home/drive shortcuts, parent navigation, direct paths, cancellation and recoverable loading errors; works on Windows, macOS and Linux.

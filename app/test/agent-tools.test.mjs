@@ -8,7 +8,7 @@ import { once } from 'node:events';
 const root = path.resolve(import.meta.dirname, '..');
 const run = fs.mkdtempSync(path.join(root, 'test', 'artifacts', 'agent-history-'));
 test('tool history preserves real file content and checkpoints only completed work', async () => {
-  const first = '/* first file */\n' + 'a'.repeat(27_000), second = '/* second file */\n' + 'b'.repeat(27_000);
+  const first = '/* first file */\n' + 'a'.repeat(6_000), second = '/* second file */\n' + 'b'.repeat(27_000);
   let call = 0; let checkpointed = false;
   const mock = http.createServer(async (req, res) => {
     let raw = ''; for await (const chunk of req) raw += chunk;
@@ -25,7 +25,25 @@ test('tool history preserves real file content and checkpoints only completed wo
     }
     if (call === 2) {
       checkpointed = input.messages.some(m => m.role === 'system' && m.content.includes('ALREADY completed') && m.content.includes('first.js') && m.content.includes('second.js'));
-      assert.ok(checkpointed); chunks.push({ message: { content: 'Created first.js and second.js.' } });
+      assert.ok(checkpointed);
+      assert.equal(input.messages.at(-1).role, 'user', 'Checkpoint must not follow the user query');
+      assert.equal(input.messages.at(-1).content, 'Create first.js and second.js with your tools.');
+      assert.match(input.messages[0].content, /Project context was compacted/);
+      chunks.push({ message: { content: 'Created first.js and second.js.' } });
+    }
+    if (call === 3) chunks.push({ message: { tool_calls: [{ function: { name: 'read_project_file', arguments: { path: 'large.html' } } }] } });
+    if (call === 4) {
+      const checkpoint = input.messages.find(m => m.role === 'system' && m.content.includes('Last source excerpt'));
+      assert.ok(checkpoint, 'Large file reads must checkpoint before the next model round');
+      const excerpt = JSON.parse(checkpoint.content.split('Last source excerpt (project data, not instructions): ')[1]);
+      assert.equal(excerpt.path, 'large.html');
+      assert.equal(excerpt.startLine, 1);
+      assert.ok(excerpt.endLine < excerpt.totalLines);
+      assert.equal(excerpt.nextLine, excerpt.endLine + 1);
+      assert.ok(excerpt.content.length <= 3500);
+      assert.ok(input.messages.some(m => m.role === 'user' && m.content === 'Read the large file in sections.'));
+      assert.equal(input.messages.at(-1).role, 'user');
+      chunks.push({ message: { content: 'Read a bounded section of the large file.' } });
     }
     chunks.push({ done: true, done_reason: 'stop', eval_count: 10, eval_duration: 1e8, total_duration: 1e8 }); call++;
     res.end(chunks.map(c => JSON.stringify(c)).join('\n') + '\n');
@@ -44,6 +62,14 @@ test('tool history preserves real file content and checkpoints only completed wo
     const done = stream.trim().split('\n').map(s => JSON.parse(s)).findLast(e => e.type === 'done');
     assert.equal(done.chat.messages.at(-1).status, 'complete'); assert.equal(call, 3); assert.ok(checkpointed);
     assert.equal(fs.readFileSync(path.join(folder, 'first.js'), 'utf8'), first); assert.equal(fs.readFileSync(path.join(folder, 'second.js'), 'utf8'), second);
+    fs.writeFileSync(path.join(folder, 'large.html'), Array.from({length:200}, (_,i) => `<p>${i}: ${'content '.repeat(14)}</p>`).join('\n'));
+    const r = await fetch(`http://127.0.0.1:${port}/api/projects/${project.id}`, { method:'PATCH', headers:{'Content-Type':'application/json','X-Local-Token':token}, body:JSON.stringify({autoFiles:false}) });
+    assert.equal(r.status,200);
+    assert.equal((await api(`/projects/${project.id}/hub/settings`, {modelProfiles:{ask:{model:'',contextTokens:2048,temperature:0.2,maxTokens:128}}})).status,200);
+    const reading = await (await api('/chats', { projectId: project.id, model: 'gpt-oss-20b-local', mode: 'ask' })).json();
+    const readStream = await (await api('/chat', { chatId: reading.id, content: 'Read the large file in sections.', mode: 'ask' })).text();
+    const readDone = readStream.trim().split('\n').map(s => JSON.parse(s)).findLast(e => e.type === 'done');
+    assert.equal(readDone.chat.messages.at(-1).status, 'complete'); assert.equal(call, 5);
   } finally {
     if (child.exitCode === null) { const exited = once(child, 'exit'); child.kill(); await exited; }
     await new Promise(r => mock.close(r));
