@@ -66,7 +66,7 @@ Windows was exercised on a real 16GB NVIDIA system. macOS/Linux support is imple
 - **Editor:** click a source file, edit it, and Save or press Ctrl/Cmd S. Optional autosave waits until the model is idle. Saves retain the previous file version and refuse to overwrite a file changed since it was opened. Unsaved drafts are kept for the browser session; switching projects asks whether to save or discard them.
 - **Preview and output:** start the actual local preview, enable Split to keep it beside the editor, or select Output to see task output and run project checks. Static websites work immediately; app starters may need their dependencies installed first.
 - **Build progress:** Prepare, Create files, Check and Preview reflect recorded work. Passing checks and a ready preview are shown only after tool results confirm them. View activity opens the run log; completed setup actions live in a collapsed Recent activity drawer.
-- **Recovery:** failed builds offer relevant actions such as starting Ollama, unloading models, choosing a smaller installed model or using 4K reply context. Continue saved work inspects existing files before resuming. A CUDA initialization error may still need an Ollama/driver update; a recovery button cannot guarantee a driver fix.
+- **Recovery:** failed builds offer relevant actions such as starting Ollama, unloading models, choosing a smaller installed model or using 4K reply context. Continue saved work inspects existing files in bounded sections before resuming; long reads retain their last excerpt and next line number across context checkpoints. A CUDA initialization error may still need an Ollama/driver update; a recovery button cannot guarantee a driver fix.
 
 ## Updates and backups
 
