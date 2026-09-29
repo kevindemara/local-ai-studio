@@ -25,8 +25,8 @@ const model = id => models.find(m => m.id === id) || { label: id || 'Assistant',
 const draftKey = () => chat()?.id || `project-${state?.selectedProject || 'none'}`;
 function saveDraft() { drafts[draftKey()] = $('prompt').value; try { localStorage.setItem('localAI.drafts', JSON.stringify(drafts)); } catch {} }
 function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => $('toast').hidden = true, error ? 6500 : 3500); }
-async function api(route, input, method) {
-  const response = await fetch('/api' + route, { method: method || (input === undefined ? 'GET' : 'POST'), headers: { 'Content-Type': 'application/json', 'X-Local-Token': token }, body: input === undefined ? undefined : JSON.stringify(input) });
+async function api(route, input, method, signal) {
+  const response = await fetch('/api' + route, { method: method || (input === undefined ? 'GET' : 'POST'), headers: { 'Content-Type': 'application/json', 'X-Local-Token': token }, body: input === undefined ? undefined : JSON.stringify(input), signal });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
   return data;
@@ -200,12 +200,37 @@ async function saveProject(event) {
   } catch (error) { $('project-error').textContent = error.message; }
   finally { $('save-project').disabled = false; }
 }
-async function pickFolder() {
-  $('browse-folder').disabled = true; $('browse-folder').textContent = 'Choose…'; $('project-error').textContent = '';
-  try { const result = await api('/pick-folder', {}); if (result.folder) $('project-folder').value = result.folder; }
-  catch (error) { $('project-error').textContent = 'Folder picker unavailable. You can paste the folder path instead. ' + error.message; }
-  finally { $('browse-folder').disabled = false; $('browse-folder').textContent = 'Browse…'; }
+let folderRequest, folderSelection = '';
+function pickFolder() {
+  $('project-error').textContent = '';
+  $('folder-dialog').showModal();
+  loadFolder($('project-folder').value);
 }
+async function loadFolder(folder = '') {
+  folderRequest?.abort();
+  const controller = new AbortController(); folderRequest = controller;
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  folderSelection = ''; $('folder-use').disabled = true; $('folder-up').disabled = true;
+  $('folder-path-input').value = folder;
+  $('folder-status').textContent = 'Loading folders…'; $('folder-list').replaceChildren();
+  try {
+    const result = await api('/folders', { path: folder }, 'POST', controller.signal);
+    if (folderRequest !== controller || !$('folder-dialog').open) return;
+    folderSelection = result.folder; $('folder-path-input').value = result.folder;
+    $('folder-up').disabled = !result.parent; $('folder-up').dataset.folderPath = result.parent || '';
+    $('folder-locations').innerHTML = result.locations.map(item => `<button type="button" data-folder-path="${escape(item.path)}">${escape(item.name)}</button>`).join('');
+    $('folder-list').innerHTML = result.folders.map(item => `<button type="button" class="folder-entry" data-folder-path="${escape(item.path)}">${icon('folder')}<span>${escape(item.name)}</span><span aria-hidden="true">›</span></button>`).join('');
+    $('folder-status').textContent = result.truncated ? 'Showing part of this large folder. Enter a subfolder path to navigate directly.' : result.folders.length ? 'Open a folder below, or use the current folder.' : 'No subfolders. You can use this folder.';
+    $('folder-use').disabled = false;
+  } catch (error) {
+    if (folderRequest === controller && $('folder-dialog').open) $('folder-status').textContent = controller.signal.aborted ? 'The folder took too long to open. Try another path or a Home shortcut.' : error.message;
+  } finally { clearTimeout(timeout); }
+}
+$('folder-dialog').addEventListener('close', () => { folderRequest?.abort(); folderRequest = null; folderSelection = ''; });
+$('folder-dialog').addEventListener('click', event => { const button = event.target.closest('[data-folder-path]'); if (button && !button.disabled) loadFolder(button.dataset.folderPath); });
+$('folder-location-form').addEventListener('submit', event => { event.preventDefault(); loadFolder($('folder-path-input').value); });
+$('folder-path-input').addEventListener('input', () => { folderRequest?.abort(); folderRequest = null; folderSelection = ''; $('folder-use').disabled = true; $('folder-status').textContent = 'Press Open path to browse and select this location.'; });
+$('folder-use').addEventListener('click', () => { if (folderSelection) { $('project-folder').value = folderSelection; $('folder-dialog').close(); $('browse-folder').focus(); } });
 async function loadFiles() {
   const p = project(); currentFiles = []; fileProject = p?.id || '';
   $('file-list').innerHTML = '<div class="file-empty">Loading files…</div>';

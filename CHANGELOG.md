@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2 — 2026-09-29
+
+- Replaced the separate Windows folder dialog with an in-app folder browser, so project folder selection cannot leave Choose disabled behind a hidden native window. Includes home/drive shortcuts, parent navigation, direct paths, cancellation and recoverable loading errors; works on Windows, macOS and Linux.
+
 ## 0.5.1 — 2026-09-28
 
 - Model removal now waits for the recorded job result and refreshes installed model choices on success, so a removed tag is not left in the chat selector. Failures remain visible.
