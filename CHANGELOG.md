@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 — 2026-09-28
+
+- Model removal now waits for the recorded job result and refreshes installed model choices on success, so a removed tag is not left in the chat selector. Failures remain visible.
+
 ## 0.5.0 — 2026-09-28
 
 - Added Code & workflow with a searchable source symbol/import map, reverse dependencies, source-line navigation and a read-only code-map tool for the agent.

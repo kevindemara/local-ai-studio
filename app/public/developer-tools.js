@@ -12,6 +12,16 @@ const heading=(title,description)=>`<h3>${title}</h3><p>${description}</p>`;
 const fileLink=(file,line)=>`<button class="dev-link" data-dev-file="${e(file)}" data-line="${line||1}">${e(file)}${line?':'+line:''}</button>`;
 const parts=value=>value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
 async function fresh(){state=await api('/state');render();}
+async function finishModelRemoval(job){
+  for(let attempt=0;attempt<40;attempt++){
+    const current=(await api('/studio/jobs')).find(j=>j.id===job.id);if(!current)throw new Error('Removal history is unavailable. Refresh the app to check installed models.');
+    if(current.status==='complete'){const bootstrap=await api('/bootstrap');models=bootstrap.models;state=bootstrap.state;render();if($('developer-dialog').open&&section==='models')await draw();toast('Model tag removed; model choices refreshed.');return;}
+    if(current.status!=='running')throw new Error(current.message||'Model removal did not finish.');
+    if($('developer-dialog').open&&section==='models')$('developer-error').textContent='Removing '+job.label.replace(/^Remove /,'')+'…';
+    await new Promise(resolve=>setTimeout(resolve,1000));
+  }
+  throw new Error('Removal is still running. Check Recent activity and refresh model choices when it finishes.');
+}
 async function openDeveloper(next=section,source=''){
   if(!state||!project())return;projectId=project().id;section=next;planSource=source||planSource;replacement=null;$('developer-error').textContent='';if(!$('developer-dialog').open)$('developer-dialog').showModal();await draw();
 }
@@ -57,7 +67,7 @@ document.addEventListener('submit',async event=>{const form=event.target;if(!for
   else if(form.id==='dev-replace-form'){replacement=await api(route('replace-preview'),{find:$('dev-find').value,replace:$('dev-replace').value,path:$('dev-replace-path').value});$('dev-replace-preview').innerHTML=`<div class="dev-summary"><span><strong>${replacement.files.length}</strong>files</span><span><strong>${replacement.total}</strong>matches</span></div>${replacement.files.map(f=>`<div class="dev-file"><h3>${e(f.path)} · ${f.count} matches</h3><details><summary>Original</summary><pre>${e(f.original)}</pre></details><details open><summary>After replacement</summary><pre>${e(f.content)}</pre></details></div>`).join('')}<p class="field-help">${e(replacement.note)} Preview expires in 10 minutes.</p>${btn('Apply reviewed replacements','replace-apply','',true)}`;return;}
   else if(form.id==='dev-handoff-form'){if(!await resolveDraft())return;const [chatId,messageId]=$('dev-plan-source').value.split(':'),result=await api(route('handoff'),{chatId,messageId,approved:$('dev-plan-approved').checked,plan:$('dev-approved-plan').value});await fresh();$('developer-dialog').close();await selectChat(result.chat.id);toast('Approved plan queued for Build.');return;}
   else if(form.dataset.devTags){await api(route('chat'),{id:form.dataset.devTags,tags:parts(form.querySelector('input').value)});}
-  else if(form.dataset.devRemove){await api('/studio/model-remove',{model:form.dataset.devRemove,confirm:form.querySelector('input').value});toast('Model removal started.');await draw();return;}
+  else if(form.dataset.devRemove){const job=await api('/studio/model-remove',{model:form.dataset.devRemove,confirm:form.querySelector('input').value});toast('Model removal started.');await finishModelRemoval(job);return;}
   await fresh();await draw();toast('Saved.');
   }catch(error){$('developer-error').textContent=error.message;toast(error.message,true);}finally{submit.disabled=false;}});
 document.addEventListener('input',event=>{if(event.target.id==='dev-map-query'){const q=event.target.value.toLowerCase();$('dev-map-list').innerHTML=mapCards(data.map.nodes.filter(f=>(f.path+' '+f.symbols.map(s=>s.name).join(' ')+' '+f.imports.map(i=>i.specifier).join(' ')).toLowerCase().includes(q)));}else if(event.target.id==='dev-chat-query')$('dev-chat-list').innerHTML=chatCards(event.target.value);});
