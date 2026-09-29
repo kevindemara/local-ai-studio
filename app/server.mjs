@@ -25,6 +25,7 @@ import { Backups, checkUpdates, prepareUpdate } from './maintenance.mjs';
 import { kickoff } from './public/helpers.mjs';
 import {ProjectHub,contextPack,generationProfile,knowledgeContext} from './project-hub.mjs';
 import {DeveloperTools,agentCodeMap,assertEditScope,scopedTool,runtimePolicy,runLimits,deadline} from './developer-tools.mjs';
+import { browseFolders } from './folder-browser.mjs';
 
 const exec = promisify(execFile);
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -810,8 +811,12 @@ const server = http.createServer(async (req, res) => {
     if (route === '/api/cancel' && req.method === 'POST') { active?.controller.abort(); return json(res, { ok: true }); }
     if (route === '/api/unload' && req.method === 'POST') { idle(); await stopModels(); healthCache.at = 0; return json(res, { ok: true }); }
     if (route === '/api/pick-folder' && req.method === 'POST') {
-      idle(); const result = await exec('powershell.exe', ['-NoProfile', '-STA', '-ExecutionPolicy', 'RemoteSigned', '-File', path.join(ROOT, 'pick-folder.ps1')], { windowsHide: true, timeout: 300_000 });
-      return json(res, { folder: result.stdout.trim() });
+      throw new AppError('The folder picker has moved into the app. Reload this page and click Choose folder.', 410);
+    }
+    if (route === '/api/folders' && req.method === 'POST') {
+      const input = await body(req);
+      try { return json(res, await browseFolders(input.path)); }
+      catch (error) { throw new AppError(error.message, 400); }
     }
     if (route === '/api/server-stop' && req.method === 'POST') {
       queue.close(); studioJobs.close(); await extensions.close(); active?.controller.abort(); json(res, { ok: true });

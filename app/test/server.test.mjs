@@ -42,6 +42,22 @@ async function request(route, data, method, headers = {}) {
 before(async () => { const socket = net.createServer(); socket.listen(0, '127.0.0.1'); await once(socket, 'listening'); port = socket.address().port; await new Promise(resolve => socket.close(resolve)); await start(); });
 after(stop);
 
+test('project folder selection is authenticated, cancellable without project mutation, and supports linked folders', async () => {
+  const before = (await request('/api/state')).data.projects.length;
+  assert.equal((await request('/api/folders', { path: run }, 'POST', { 'X-Local-Token': '' })).status, 403);
+  const listing = await request('/api/folders', { path: run });
+  assert.equal(listing.status, 200);
+  assert.equal(listing.data.folder, fs.realpathSync(run));
+  assert.ok(listing.data.folders.some(item => item.path === folder));
+  assert.equal((await request('/api/state')).data.projects.length, before);
+  assert.equal((await request('/api/folders', { path: path.join(run, 'outside.txt') })).status, 400);
+  assert.equal((await request('/api/folders', { path: 'not-absolute' })).status, 400);
+  assert.equal((await request('/api/pick-folder', {})).status, 410);
+  const linked = await request('/api/projects', { name: 'Folder browser fixture', folder: listing.data.folders.find(item => item.name === 'project').path });
+  assert.equal(linked.status, 201);
+  assert.equal(linked.data.folder, fs.realpathSync(folder));
+});
+
 test('inline editor refuses stale saves and guided plans survive project reloads',async()=>{
   const p=(await request('/api/projects',{name:'Guided test'})).data;await request(`/api/projects/${p.id}/scaffold`,{template:'static'});const original=(await request(`/api/projects/${p.id}/file?path=index.html`)).data;
   assert.match(original.revision,/^[a-f\d]{64}$/);assert.equal((await request(`/api/projects/${p.id}/file`,{path:'index.html',content:'new',expectedRevision:original.revision})).status,200);

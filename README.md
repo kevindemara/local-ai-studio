@@ -16,7 +16,7 @@ A local workspace for people who want AI to **build real projects**, not just pa
 1. Download the [latest release](https://github.com/kevindemara/local-ai-studio/releases) ZIP and extract it into a folder you want to keep. Source ZIP downloads also work.
 2. Double-click **Setup.cmd**. A setup window explains what will be installed and offers a desktop shortcut.
 3. The browser wizard checks CPU, GPU, RAM, storage and required tools. Install missing tools, start Ollama, then choose a model.
-4. Add a project. The kickoff wizard asks for its goal, pages/features and visual style, then lets you edit the build plan. Create the starter and choose **Build this plan** when ready. Choose **Use an existing folder** to work on an existing project.
+4. Add a project. The kickoff wizard asks for its goal, pages/features and visual style, then lets you edit the build plan. Create the starter and choose **Build this plan** when ready. Choose **Use an existing folder** to work on an existing project, then **Choose folder…** to browse local folders inside Studio and **Use this folder** to confirm. You can also paste an absolute folder path.
 
 If Windows marks extracted scripts as downloaded, review the source and use the file’s Properties → Unblock, or the documented PowerShell `Unblock-File` command. Studio does not bypass system security settings. Keep the extracted folder: the shortcut launches the app from there.
 
