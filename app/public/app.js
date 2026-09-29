@@ -73,12 +73,12 @@ function renderSidebar() {
   const query = $('search').value.toLowerCase().trim();
   let html = '';
   for (const p of state.projects) {
-    const chats = state.chats.filter(c => c.projectId === p.id).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-    const matches = chats.filter(c => !query || c.title.toLowerCase().includes(query) || p.name.toLowerCase().includes(query));
+    const chats = state.chats.filter(c => c.projectId === p.id && (!c.archived||c.id===state.selectedChat)).sort((a, b) => Number(Boolean(b.pinned))-Number(Boolean(a.pinned))||b.updatedAt.localeCompare(a.updatedAt));
+    const matches = chats.filter(c => !query || c.title.toLowerCase().includes(query) || p.name.toLowerCase().includes(query)||(c.tags||[]).some(t=>t.toLowerCase().includes(query)));
     if (query && !p.name.toLowerCase().includes(query) && !matches.length) continue;
     const active = p.id === state.selectedProject;
     html += `<button class="project-row ${active ? 'active' : ''}" data-project="${p.id}" title="${escape(p.folder || p.name)}" ${active ? 'aria-current="true"' : ''}>${icon('folder')}<span class="project-name">${escape(p.name)}</span><span class="project-count">${chats.length || ''}</span></button>`;
-    if (active || query) html += `<div class="chat-list">${matches.length ? matches.map(c => `<button class="chat-row ${c.id === state.selectedChat ? 'active' : ''}" data-chat="${c.id}" ${c.id === state.selectedChat ? 'aria-current="page"' : ''}>${icon('chat')}<span>${escape(c.title)}</span></button>`).join('') : '<div class="empty-nav">No chats yet</div>'}</div>`;
+    if (active || query) html += `<div class="chat-list">${matches.length ? matches.map(c => `<button class="chat-row ${c.id === state.selectedChat ? 'active' : ''}" data-chat="${c.id}" title="${escape((c.tags||[]).join(', '))}" ${c.id === state.selectedChat ? 'aria-current="page"' : ''}>${icon('chat')}<span>${c.pinned?'★ ':''}${escape(c.title)}${c.archived?' · archived':''}</span></button>`).join('') : '<div class="empty-nav">No chats yet</div>'}</div>`;
   }
   $('projects').innerHTML = html || `<div class="empty-nav">${query ? 'No matching projects or chats.' : 'Add a project to begin.'}</div>`;
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-09-28
+
+- Added Code & workflow with a searchable source symbol/import map, reverse dependencies, source-line navigation and a read-only code-map tool for the agent.
+- Added agent edit boundaries with allowed/protected path patterns, enforced on writes, edits, moves and trash; bypass-capable agent tools and automatic checks/preview are disabled while scoped.
+- Added ordered existing package-script quality gates, real saved output, cancellation and integration with agent verification/repair, plus a TODO/FIXME navigator that creates task cards.
+- Added reviewed multi-file literal replacement with counts, original/proposed content, stale-file preflight, tracked backups and recovery for partial failures where safe.
+- Added installed model metadata/storage management with exact-tag removal confirmation, and Eco/Balanced/Warm memory plus Auto/CPU request settings.
+- Added reviewed Plan-to-Build handoff with approved-plan provenance, chat pins/tags/archive/restore and configurable wall-clock/model-round limits with saved-work recovery.
+- Documented another twenty researched candidates, the ten shipped additions and practical limits. Existing defaults, user projects and chats are preserved. No additional models or runtime dependencies are installed.
+
 ## 0.4.0 — 2026-09-28
 
 - Added Project hub with a local text/Markdown/JSON knowledge library, bounded keyword retrieval, stable reference IDs and visible source excerpts.

@@ -7,9 +7,9 @@
 
 A local workspace for people who want AI to **build real projects**, not just paste code into a chat. Choose an Ollama model, describe a website or app, and review connected files, checks, previews and version history in one place.
 
-**0.4 preview · Windows installer · Node.js 22+ · MIT**
+**0.5 preview · Windows installer · Node.js 22+ · MIT**
 
-![Project hub with reusable prompts and the new project tools](docs/images/studio-project-hub.png)
+![Code and workflow tools with source connections, symbols and project controls](docs/images/studio-code-workflow.png)
 
 ## Get started on Windows
 
@@ -36,8 +36,13 @@ No Docker, cloud account or paid model subscription is required. Internet is nee
 - **Control model edits:** optional review-before-save proposals, original/proposed contents, per-file approval/rejection, stale-file protection and decision history.
 - **Tune and compare models:** separate Ask/Plan/Build profiles, optional model routing, and serial two-model comparisons with actual responses and measured token speed.
 - **Find and share work:** full conversation-content search, a Ctrl/Cmd K command palette for files/projects/tools/prompts, and checksum-verified source-only project ZIP export/import.
+- **Understand and refine code:** a searchable symbol/import map with reverse dependencies, source-line navigation, TODO-to-task cards and reviewed multi-file literal replacements.
+- **Control each build:** allowed/protected edit paths, ordered lint/typecheck/build/test scripts, reviewed Plan-to-Build handoff, and wall-clock/model-round limits that preserve completed work.
+- **Manage a growing local workspace:** pin/tag/archive chats, inspect installed model storage/capabilities, deliberately remove exact model tags, and choose Eco/Balanced/Warm memory or Auto/CPU compute.
 
 See the [Project hub guide](docs/PROJECT-HUB.md) for workflows and limits, and the [20-feature research and selection](docs/FEATURE-RESEARCH.md) for what shipped and what remains a candidate.
+
+The new [Code & workflow guide](docs/CODE-WORKFLOW.md) covers the ten additions in 0.5. Read [another twenty researched features](docs/FEATURE-RESEARCH-02.md) for the ranked selection and ten future candidates. Open **Code & workflow** in the sidebar; model storage and memory controls also appear under **Setup & models**.
 
 Image generation is optional and requires a separately installed compatible local image engine. Model vision support does **not** mean image generation. See [configuration](docs/CONFIGURATION.md).
 
