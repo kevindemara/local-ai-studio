@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { projectTarget, writeProjectFile } from './project-files.mjs';
 import { packageInfo, runProjectTask } from './project-runtime.mjs';
+import {qualityGates} from './developer-tools.mjs';
 
 export const hash = value => createHash('sha256').update(value).digest('hex');
 export function recordChange(changes, project, result) {
@@ -91,7 +92,9 @@ export async function verifyProject(project, list, read, signal, output) {
     }
   }
   checks.push({ name: 'JSON and local file references', success: !issues.length, checkedFiles: files.length });
-  if (project.allowCommands !== false) {
+  if(project.qualityScripts?.length){
+    const gates=await qualityGates(project,signal,output);checks.push(...gates.checks);if(!gates.success)issues.push({message:'Configured quality gates did not pass.',remaining:gates.remaining});
+  } else if (project.allowCommands !== false) {
     let pkg; try { pkg = packageInfo(project); } catch { /* Invalid JSON is already reported above, so the model can repair it. */ }
     if (pkg?.scripts.build) {
       const result = await runProjectTask(project, { task: 'script', script: 'build' }, signal, output); checks.push({ name: 'Build', ...result });
