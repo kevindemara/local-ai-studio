@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 — 2026-09-28
+
+- Added Project hub with a local text/Markdown/JSON knowledge library, bounded keyword retrieval, stable reference IDs and visible source excerpts.
+- Added full-content context ranking, an excerpt inspector, source budgets, glob exclusions and estimated context usage.
+- Added persisted review-before-save model proposals with original/proposed contents, individual approvals/rejections and stale-file protection. Agent commands, MCP, scaffolding and image generation are disabled while review is enabled.
+- Added reusable prompts with variables and slash commands, separate Ask/Plan/Build model profiles and optional routing, and serial two-model response/speed comparisons with cancellation and error history.
+- Added source-only project ZIP bundles with file-list review, checksums, bounded extraction, new-folder import and cautious imported-project defaults.
+- Added full conversation-content search, a keyboard command palette and a task board with acceptance criteria, durable build/run links and human-reviewed completion.
+- Documented twenty researched candidates, selected ten implementations and their practical limits. No additional model downloads or runtime dependencies are required.
+
 ## 0.3.0 — 2026-09-28
 
 - Added a unified build workspace with keyboard-resizable file/chat panels, inline editing, optional idle autosave, stale-save protection, live preview and task output.

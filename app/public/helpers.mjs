@@ -16,7 +16,7 @@ export function recovery(error) {
   return {title:'The build needs attention',detail:'Review the error and saved files, then continue the remaining work.',actions:[]};
 }
 export function buildProgress(run,message) {
-  const activity=message?.activity||[],artifacts=message?.artifacts||[],written=artifacts.filter(a=>a.path&&!a.error&&a.action!=='unchanged').length||activity.filter(a=>/write|edit_project|move_project|trash_project|patch|file_operation/.test(a.tool)&&a.result&&!a.result.error&&a.result.success!==false).length;
+  const activity=message?.activity||[],artifacts=message?.artifacts||[],written=artifacts.filter(a=>a.path&&!a.error&&!['unchanged','proposed'].includes(a.action)).length||activity.filter(a=>/write|edit_project|move_project|trash_project|patch|file_operation/.test(a.tool)&&a.result&&!a.result.error&&a.result.success!==false).length;
   const check=activity.findLast(a=>a.tool==='verify_project')?.result;
   const preview=activity.findLast(a=>a.tool==='start_project_preview')?.result;
   const verified=check?.success&&(message?.verifiedWrites===undefined||message.verifiedWrites>=artifacts.length);
