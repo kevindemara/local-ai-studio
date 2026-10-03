@@ -1,6 +1,6 @@
 {
   "name": "local-ai-studio",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "description": "A local AI workspace with hardware-aware setup, connected project files, GitHub and MCP",

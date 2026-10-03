@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-const extensions = new Set(['.html', '.css', '.scss', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.json', '.md', '.txt', '.svg', '.yaml', '.yml', '.toml', '.xml', '.sql', '.py', '.rs', '.go', '.java', '.c', '.cpp', '.h', '.cs', '.rb', '.php', '.vue', '.svelte', '.gitignore', '.png', '.webp', '.jpg', '.jpeg']);
+const extensions = new Set(['.html', '.css', '.scss', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.json', '.md', '.txt', '.svg', '.yaml', '.yml', '.toml', '.xml', '.sql', '.py', '.rs', '.go', '.java', '.c', '.cpp', '.h', '.cs', '.rb', '.php', '.vue', '.svelte', '.gitignore', '.png', '.webp', '.jpg', '.jpeg', '.wav']);
 const forbidden = new Set(['.git', '.codex', '.ssh', 'node_modules', '.venv', 'venv', 'data', 'logs', 'models', 'runtime', 'downloads', 'backups']);
 function fail(message, code = 400) { const error = new Error(message); error.code = code; throw error; }
 function inside(root, target) { const relative = path.relative(root, target); return relative && relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative); }
@@ -32,7 +32,7 @@ export function projectTarget(project, input, createParents = false) {
 }
 export function writeProjectFile(project, input, content, backupRoot, binary = false) {
   if (!binary && (typeof content !== 'string' || content.includes('\0') || Buffer.byteLength(content) > 200_000)) fail('Source files must contain text under 200 KB.');
-  if (!binary && /\.(png|webp|jpe?g)$/i.test(input)) fail('Use image generation to create image files.');
+  if (!binary && /\.(png|webp|jpe?g|wav)$/i.test(input)) fail('Use asset generation to create binary files.');
   const { target, relative } = projectTarget(project, input, true);
   let backup = '';
   if (fs.existsSync(target)) {

@@ -55,6 +55,10 @@ outputs/
 
 These large assets are not installed by Setup.cmd and are not included in releases. Check their upstream model licenses and the runtime's hardware support. The Images panel reports whether the required files exist; generation unloads chat models first. Other image services may be connected through trusted MCP tools, subject to their server's behavior and terms.
 
+## Optional audio engines
+
+On Windows with NVIDIA CUDA, run `scripts/install-audio.ps1` from the repository after installing official Python 3.12, Git and uv. It creates `%LOCALAPPDATA%\LocalAIStudioAudio` with separate environments for ACE-Step music, MOSS SoundEffect v2 and Qwen3-TTS VoiceDesign. This location survives Studio release updates. Set `LOCAL_AI_AUDIO_ROOT` before starting Studio if you keep that folder elsewhere. Studio checks for each model's weights independently; the Sound panel enables only installed modes. Weights and generated outputs are not bundled in releases or workspace backups. Each generation runs as a short-lived Python process, unloads the Ollama chat model first and saves a WAV in the selected project with a recoverable previous version. Checkpoint size limits still apply to large audio files.
+
 ## Plugins
 
 ### Common servers

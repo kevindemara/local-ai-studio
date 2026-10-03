@@ -17,7 +17,7 @@ export function reviewChange(project, change) {
   const { target } = projectTarget(project, change.path);
   const current = fs.existsSync(target) ? fs.readFileSync(target) : Buffer.alloc(0);
   const before = change.backup && fs.existsSync(change.backup) ? fs.readFileSync(change.backup) : Buffer.alloc(0);
-  const binary = /\.(png|webp|jpe?g)$/i.test(change.path);
+  const binary = /\.(png|webp|jpe?g|wav)$/i.test(change.path);
   return { ...change, binary, before: binary ? '' : before.toString('utf8'), after: binary ? '' : current.toString('utf8'), canUndo: !change.undoneAt && fs.existsSync(target) && hash(current) === change.hash };
 }
 export function undoChange(project, change, backupRoot) {
@@ -46,7 +46,7 @@ export function searchProject(project, input, list, read) {
   const query = String(input.query || '').trim(); if (!query || query.length > 200) throw new Error('Use a search string under 200 characters.');
   const hits = [], needle = query.toLowerCase();
   for (const file of list(project).files) {
-    if (file.kind === 'image') continue;
+    if (file.kind === 'image' || file.kind === 'audio') continue;
     if (input.path && !file.path.toLowerCase().includes(String(input.path).toLowerCase())) continue;
     const content = read(project, file.path).content;
     for (const [line, text] of content.split('\n').entries()) if (text.toLowerCase().includes(needle)) {

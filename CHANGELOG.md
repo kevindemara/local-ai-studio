@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — 2026-10-03
+
+- Added optional local audio generation for game sound effects, music and spoken voice using MOSS SoundEffect v2, ACE-Step 1.5 and Qwen3-TTS VoiceDesign. The Sound panel saves WAV clips into the selected project and plays them back; Build mode can create audio assets through a project tool.
+- Added a Windows NVIDIA audio installer that keeps model weights and isolated Python environments outside the release checkout. Audio jobs unload Ollama chat models, run one at a time, and preserve previous project files for undo.
+- Added audio file browsing and playback, bounded generation inputs and regression checks. Model weights are never included in the repository or release archive.
+
 ## 0.5.3 — 2026-09-29
 
 - Fixed Qwen continuations after large project reads: file excerpts are bounded, context checkpoints now follow the selected model's context size, and the latest user request remains the final message sent to Ollama.
