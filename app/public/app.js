@@ -243,7 +243,7 @@ function renderFilePanel() {
   const filtered=currentFiles.filter(f=>f.path.toLowerCase().includes($('file-search').value.toLowerCase()));
   const tree={}; for(const file of filtered){const parts=file.path.split('/');let node=tree;for(const part of parts.slice(0,-1))node=node[part] ||= {};node[parts.at(-1)]={file};}
   const selected=new Set(chat()?.attachments || []);
-  const rows=node=>Object.entries(node).map(([name,item])=>item.file ? '<div class="file-row"><input type="checkbox" aria-label="Attach '+escape(item.file.path)+'" data-file="'+escape(item.file.path)+'" '+(selected.has(item.file.path)?'checked ':'')+(busy||item.file.kind==='image'?'disabled':'')+'><button data-preview="'+escape(item.file.path)+'" title="'+escape(item.file.path)+'">'+(item.file.kind==='image'?'▧ ':'')+escape(name)+'</button><small>'+Math.round(item.file.bytes/1024)+' KB</small></div>' : '<details class="file-folder" open><summary>'+escape(name)+'</summary><div>'+rows(item)+'</div></details>').join('');
+  const rows=node=>Object.entries(node).map(([name,item])=>item.file ? '<div class="file-row"><input type="checkbox" aria-label="Attach '+escape(item.file.path)+'" data-file="'+escape(item.file.path)+'" '+(selected.has(item.file.path)?'checked ':'')+(busy||item.file.kind!=='text'?'disabled':'')+'><button data-preview="'+escape(item.file.path)+'" title="'+escape(item.file.path)+'">'+(item.file.kind==='image'?'▧ ':item.file.kind==='audio'?'♫ ':'')+escape(name)+'</button><small>'+Math.round(item.file.bytes/1024)+' KB</small></div>' : '<details class="file-folder" open><summary>'+escape(name)+'</summary><div>'+rows(item)+'</div></details>').join('');
   $('file-list').innerHTML=filtered.length ? rows(tree) : '<p class="file-empty">No matching files. Create a file or choose a starter project.</p>';
 }
 
@@ -254,12 +254,12 @@ async function toggleAttachment(file, add) {
   updateChat(await api(`/chats/${c.id}`, { attachments: [...attachments] }, 'PATCH')); renderComposer(); renderSidebar(); renderFilePanel();
 }
 async function previewFile(file) {
-  if (currentFiles.find(f=>f.path===file)?.kind === 'image') {
+  if (['image','audio'].includes(currentFiles.find(f=>f.path===file)?.kind)) {
     const res = await fetch('/api/projects/'+project().id+'/asset?path='+encodeURIComponent(file),{headers:{'X-Local-Token':token}}); if (!res.ok) throw Error((await res.json()).error);
     if (assetUrl) URL.revokeObjectURL(assetUrl); assetUrl = URL.createObjectURL(await res.blob());
-    editorPath=file;editorProject=project().id; $('preview-title').textContent=file; $('asset-image').src=assetUrl; $('asset-image').hidden=false; $('preview-content').hidden=true; document.querySelector('[data-action="save-editor"]').hidden=true; $('preview-dialog').showModal();return;
+    editorPath=file;editorProject=project().id; $('preview-title').textContent=file; const isAudio=currentFiles.find(f=>f.path===file)?.kind==='audio'; $('asset-image').src=isAudio?'':assetUrl; $('asset-image').hidden=isAudio; $('asset-audio').src=isAudio?assetUrl:''; $('asset-audio').hidden=!isAudio; $('preview-content').hidden=true; document.querySelector('[data-action="save-editor"]').hidden=true; $('preview-dialog').showModal();return;
   }
-  $('asset-image').hidden=true; $('preview-content').hidden=false; document.querySelector('[data-action="save-editor"]').hidden=false;
+  $('asset-image').hidden=true; $('asset-audio').hidden=true; $('asset-audio').pause(); $('preview-content').hidden=false; document.querySelector('[data-action="save-editor"]').hidden=false;
   const data = await api(`/projects/${project().id}/file?path=${encodeURIComponent(file)}`);
   editorPath = file; editorProject = project().id; $('preview-title').textContent = file; $('preview-content').value = data.content; $('editor-status').textContent = ''; $('preview-content').readOnly = busy; $('preview-dialog').showModal();
 }
@@ -286,6 +286,7 @@ const actions = {
   unload: async () => { $('unload-button').disabled = true; try { await api('/unload', {}); await refreshStatus(); toast('Models unloaded. VRAM is available for other work.'); } finally { renderComposer(); } },
   export: exportChat,
   images: openImages,
+  audio: openAudio,
   'save-code': target => {
     if (busy) throw new Error('Wait until the build finishes before saving a code block.');
     const block = target.closest('.code-block'); pendingCode = block.querySelector('code').textContent;
@@ -309,6 +310,49 @@ async function openImages() {
   $('image-engine-status').textContent = status.ready ? `${status.model} · Free · Runs on this PC` : 'The local image model is not installed yet.';
   $('image-generate').disabled = busy || !status.ready; renderImageGallery(); $('image-dialog').showModal();
 }
+let audioEngines = {};
+function renderAudioGallery() {
+  $('audio-gallery').innerHTML = (state.audio || []).filter(a => a.projectId === project()?.id).slice(-8).reverse().map(a => `<div class="audio-card"><strong>${escape(a.path)}</strong><small>${escape(a.model)}</small><audio controls preload="none" src="/audio/${a.audioId}.wav"></audio></div>`).join('');
+}
+function audioModeChanged() {
+  const mode = $('audio-mode').value, engine = audioEngines[mode];
+  $('audio-form').classList.toggle('voice-mode', mode === 'voice');
+  $('audio-engine-status').textContent = engine ? `${engine.model} · ${engine.ready ? 'Ready on this PC' : 'Not installed'}` : '';
+  $('audio-generate').disabled = busy || !engine?.ready;
+  $('audio-style-label').hidden = mode !== 'voice'; $('audio-language-label').hidden = mode !== 'voice';
+  $('audio-lyrics-label').hidden = mode !== 'music'; $('audio-duration-label').hidden = mode === 'voice'; $('audio-quality-label').hidden = mode !== 'effect';
+  $('audio-prompt-label').firstChild.textContent = mode === 'voice' ? 'Words to speak' : mode === 'music' ? 'Describe the music' : 'Describe the sound';
+  $('audio-prompt').placeholder = mode === 'voice' ? 'Welcome to the game.' : mode === 'music' ? 'Upbeat electronic game menu music with warm synths…' : 'A crisp sword strike with a short metallic ring…';
+  $('audio-duration').min = mode === 'music' ? '10' : '1'; $('audio-duration').max = mode === 'music' ? '180' : '30'; $('audio-duration').value = mode === 'music' ? '30' : '10';
+  $('audio-path').value = `assets/${mode === 'effect' ? 'sound-effect' : mode}.wav`;
+}
+async function openAudio() {
+  if (!project()) throw new Error('Add or select a project first.');
+  audioEngines = await api('/audio-status'); audioModeChanged(); renderAudioGallery(); $('audio-dialog').showModal();
+}
+$('audio-mode').addEventListener('change', audioModeChanged);
+$('audio-stop').addEventListener('click', () => api('/cancel', {}).catch(error => toast(error.message, true)));
+$('audio-form').addEventListener('submit', async event => {
+  event.preventDefault(); if (busy) return;
+  const p = project(); busy = true; phase = 'Loading audio model'; renderComposer(); $('audio-generate').disabled = true; $('audio-stop').hidden = false; $('audio-result').innerHTML = ''; $('audio-progress').textContent = phase;
+  try {
+    const response = await fetch('/api/audio', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Local-Token': token }, body: JSON.stringify({ projectId: p.id, mode: $('audio-mode').value, prompt: $('audio-prompt').value, duration: Number($('audio-duration').value), steps: Number($('audio-steps').value), style: $('audio-style').value, language: $('audio-language').value, lyrics: $('audio-lyrics').value, path: $('audio-path').value, seed: -1 }) });
+    if (!response.ok) throw new Error((await response.json()).error);
+    const reader = response.body.getReader(), decoder = new TextDecoder(); let pending = '', finished = false;
+    while (true) {
+      const chunk = await reader.read(); if (chunk.done) break;
+      pending += decoder.decode(chunk.value, { stream: true }); let newline;
+      while ((newline = pending.indexOf('\n')) >= 0) {
+        const item = JSON.parse(pending.slice(0, newline)); pending = pending.slice(newline + 1);
+        if (item.type === 'phase') { phase = item.phase; $('audio-progress').textContent = phase; renderComposer(); }
+        if (item.type === 'error') throw new Error(item.error);
+        if (item.type === 'done') { finished = true; applyProject(item.project); state.audio ||= []; state.audio.push({ ...item.audio, projectId: p.id }); $('audio-result').innerHTML = `<div class="audio-card"><strong>${escape(item.audio.path)}</strong><audio controls src="/audio/${item.audio.audioId}.wav"></audio><small>${item.audio.seconds.toFixed(1)}s · Seed ${item.audio.settings.seed}</small></div>`; $('audio-progress').textContent = 'Clip saved to your project.'; renderAudioGallery(); }
+      }
+    }
+    if (!finished) throw new Error('The audio connection ended before completion.');
+  } catch (error) { $('audio-progress').textContent = error.message; toast(error.message, true); }
+  finally { busy = false; phase = ''; $('audio-generate').disabled = !audioEngines[$('audio-mode').value]?.ready; $('audio-stop').hidden = true; render(); refreshStatus(); if (!$('file-panel').hidden) loadFiles(); }
+});
 $('save-file-form').addEventListener('submit', async event => {
   event.preventDefault();
   try { const result = await api(`/projects/${project().id}/file`, { path: $('save-file-path').value, content: pendingCode }); applyProject(result.project); $('save-file-dialog').close(); toast(`Saved ${result.path}`); await loadFiles(); }

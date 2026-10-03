@@ -5,6 +5,7 @@ import { projectTarget, writeProjectFile } from './project-files.mjs';
 import { hash, recordChange } from './project-workbench.mjs';
 
 export const isImage = name => /\.(png|jpe?g|webp)$/i.test(name);
+export const isAudio = name => /\.wav$/i.test(name);
 export function fileOperation(project, input, backupRoot, changes, runId = '') {
   const from = projectTarget(project, input.path);
   if (!fs.existsSync(from.target)) throw new Error('The source file does not exist.');

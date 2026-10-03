@@ -3,6 +3,8 @@ data/
 projects/
 models/
 image-gen/
+audio-gen/
+__pycache__/
 *.log
 *.pid
 .env

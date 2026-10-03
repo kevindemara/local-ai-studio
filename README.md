@@ -7,7 +7,7 @@
 
 A local workspace for people who want AI to **build real projects**, not just paste code into a chat. Choose an Ollama model, describe a website or app, and review connected files, checks, previews and version history in one place.
 
-**0.5 preview · Windows installer · Node.js 22+ · MIT**
+**0.6 preview · Windows installer · Node.js 22+ · MIT**
 
 ![Code and workflow tools with source connections, symbols and project controls](docs/images/studio-code-workflow.png)
 
@@ -27,6 +27,7 @@ No Docker, cloud account or paid model subscription is required. Internet is nee
 - **Hardware-aware setup:** measured NVIDIA VRAM, CPU/RAM detection, Apple unified-memory handling, honest fallbacks for unknown adapters, model fit estimates and optional verified VRAM entry.
 - **Choose free local models:** 11 dated, sourced choices with search and memory-fit/installed filters; streaming download progress and cancellation; automatic discovery of existing Ollama chat models; a short native-tool/speed test.
 - **Build connected projects:** real file creation and edits, source search, starter templates, plans, command output, verification/repair loops, live previews and API checks.
+- **Create local audio assets:** optional sound effects, original music and spoken voice. The Sound panel saves WAV clips into a project, plays them back and makes them available in Project files. Build mode can generate a clip when a project needs one.
 - **Review and recover:** diffs, undo, checkpoints, chat forks, durable queued runs and interrupted-run recovery.
 - **Use GitHub visually:** account connection through GitHub CLI, repository search/clone, project switching, Git initialization, selected-file commits, branch creation/switching, pull, push and repository publishing.
 - **Customize changelogs:** preview a release entry using `{version}`, `{date}` and `{summary}`, then save it as a reviewed project change.
@@ -44,7 +45,13 @@ See the [Project hub guide](docs/PROJECT-HUB.md) for workflows and limits, and t
 
 The new [Code & workflow guide](docs/CODE-WORKFLOW.md) covers the ten additions in 0.5. Read [another twenty researched features](docs/FEATURE-RESEARCH-02.md) for the ranked selection and ten future candidates. Open **Code & workflow** in the sidebar; model storage and memory controls also appear under **Setup & models**.
 
-Image generation is optional and requires a separately installed compatible local image engine. Model vision support does **not** mean image generation. See [configuration](docs/CONFIGURATION.md).
+Image and audio generation are optional and require separately installed local engines. Model vision support does **not** mean image generation. See [configuration](docs/CONFIGURATION.md).
+
+### Optional local sound models (Windows NVIDIA)
+
+On a CUDA-capable NVIDIA PC with around 16 GB VRAM, install [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) for music, [MOSS SoundEffect v2](https://github.com/OpenMOSS/MOSS-TTS/tree/main/moss_soundeffect_v2) for effects, and [Qwen3-TTS VoiceDesign](https://github.com/QwenLM/Qwen3-TTS) for speech. The model files total roughly 24 GB; allow more space for three isolated Python environments and downloads. Install official Python 3.12, Git and [uv](https://docs.astral.sh/uv/getting-started/installation/) first, then run `powershell -ExecutionPolicy Bypass -File scripts/install-audio.ps1` from the Studio folder and restart Studio. The script downloads model weights directly from their publishers, keeps them outside Git, and does not alter Windows security settings. On systems where Smart App Control blocks an unsigned Python runtime, use the signed python.org installer.
+
+Open **Sound** in a project to generate a short effect, an instrumental or lyrical track, or a spoken line. Music defaults to the standard ACE-Step turbo model with its 1.7B planner; the XL model needs more headroom. Only one audio job runs at a time, and Studio unloads Ollama chat models before it starts. MOSS effect generation uses a practical 24-step default. Longer clips take more time and memory. Model weights retain their own [MIT](https://huggingface.co/ACE-Step/Ace-Step1.5), [Apache 2.0](https://huggingface.co/OpenMOSS-Team/MOSS-SoundEffect-v2.0), and [Apache 2.0](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign) licenses respectively. The optional audio installer currently targets Windows with an NVIDIA CUDA GPU; other Studio platforms still run without audio.
 
 ## Hardware and platforms
 
