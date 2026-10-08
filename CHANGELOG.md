@@ -3,6 +3,7 @@
 ## 0.6.4 — 2026-10-08
 
 - File-list tool responses now rank source paths against the current request so relevant files appear before unrelated folders in large projects. Added a regression check for focused listings.
+- Moved Projects above the Studio tools in the sidebar while keeping the project list independently scrollable.
 
 ## 0.6.3 — 2026-10-08
 
