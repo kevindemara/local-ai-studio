@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 — 2026-10-07
+
+- Fixed Build mode rejecting a normal project because a nested folder exceeded an overly shallow checkpoint scan. Checkpoints still enforce file-count and 128 MB limits.
+- Trimmed automatic project context to fit the selected model's role context, keeping the latest request available on larger projects.
+- Build setup errors now show a failed phase instead of remaining labeled “Queued.”
+- Restored WAV assets as binary data when rolling a project back to a checkpoint.
+
 ## 0.6.0 — 2026-10-03
 
 - Added optional local audio generation for game sound effects, music and spoken voice using MOSS SoundEffect v2, ACE-Step 1.5 and Qwen3-TTS VoiceDesign. The Sound panel saves WAV clips into the selected project and plays them back; Build mode can create audio assets through a project tool.

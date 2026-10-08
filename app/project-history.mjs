@@ -79,7 +79,8 @@ export function restoreCheckpoint(project, checkpoint, changes, backupRoot) {
   for (const item of targets) {
     if (item.original) {
       const bytes = fs.readFileSync(item.original.stored);
-      const result = recordChange(changes, project, writeProjectFile(project, item.relative, isImage(item.relative) ? bytes : bytes.toString('utf8'), backupRoot, isImage(item.relative)));
+      const binary = isImage(item.relative) || isAudio(item.relative);
+      const result = recordChange(changes, project, writeProjectFile(project, item.relative, binary ? bytes : bytes.toString('utf8'), backupRoot, binary));
       restored.push(result);
     } else if (fs.existsSync(item.target)) restored.push(fileOperation(project, { action: 'trash', path: item.relative }, backupRoot, changes));
   }

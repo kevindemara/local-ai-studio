@@ -37,6 +37,15 @@ test('checkpoint restores connected edits, moves, trash and newly created files;
   assert.equal(fs.readFileSync(path.join(p.folder,'a.js'),'utf8'),'original A');assert.equal(fs.readFileSync(path.join(p.folder,'b.css'),'utf8'),'original B');assert.equal(fs.existsSync(path.join(p.folder,'new.js')),false);assert.equal(fs.existsSync(path.join(p.folder,'src/b.css')),false);
   restoreCheckpoint(p,snapshot,changes,backup);assert.equal(fs.readFileSync(path.join(p.folder,'b.css'),'utf8'),'original B');
 });
+test('checkpoint restores generated WAV bytes without decoding them as text',()=>{
+  const p=fixture('checkpoint-audio'),backup=path.join(root,'audio-backups'),changes=[];
+  const original=Buffer.from([82,73,70,70,0,255,128,1,87,65,86,69]);
+  fs.writeFileSync(path.join(p.folder,'effect.wav'),original);
+  const snapshot=createCheckpoint(p,'Before audio edit',path.join(root,'checkpoints'),[{path:'effect.wav'}]);snapshot.changeIndex=0;
+  recordChange(changes,p,writeProjectFile(p,'effect.wav',Buffer.from([1,2,3,4]),backup,true));
+  restoreCheckpoint(p,snapshot,changes,backup);
+  assert.deepEqual(fs.readFileSync(path.join(p.folder,'effect.wav')),original);
+});
 test('Git commits selected files while preserving other staged files and refuses parent repositories',async()=>{
   const p=fixture('git');await gitInit(p);
   fs.writeFileSync(path.join(p.folder,'a.js'),'one');fs.writeFileSync(path.join(p.folder,'b.js'),'other');
@@ -54,6 +63,10 @@ test('queued runs persist, execute serially and cancelled queued requests never 
   for(let i=0;i<100 && c.status!=='complete';i++)await wait(10);
   assert.deepEqual(executed,['one','three']);assert.equal(max,1);assert.equal(a.status,'complete');assert.equal(b.status,'stopped');assert.ok(saved>3);assert.equal(a.events[0].chat,undefined);
   const recovered={runs:[{status:'running'},{status:'queued'}]};const q=new RunQueue(recovered,()=>{},()=>{},()=>true);assert.equal(recovered.runs[0].status,'interrupted');assert.equal(recovered.runs[1].status,'queued');q.close();queue.close();
+  const failedQueue=new RunQueue({runs:[]},()=>{},()=>{},()=>false,()=>{throw new Error('Cannot create checkpoint');});
+  const failed=failedQueue.enqueue({content:'cannot start'});
+  for(let i=0;i<100 && ['queued','running'].includes(failed.status);i++)await wait(5);
+  assert.equal(failed.status,'error');assert.equal(failed.phase,'Failed to start');assert.match(failed.error,/checkpoint/);failedQueue.close();
 });
 for(const id of ['static','node','react'])test(id+' starter verifies and serves real connected files',async()=>{
   const p=fixture('template-'+id);for(const [relative,content]of Object.entries(templateFiles(id)))writeProjectFile(p,relative,content,path.join(root,'backups'));

@@ -20,7 +20,7 @@ export function knowledgeContext(project,query){
 }
 export function contextPack(project,listing,read,query=''){
   const all=listing(project), patterns=project.contextExcludes||[], sources=[];
-  for(const file of all.files){if(file.kind==='image'||excluded(file.path,patterns))continue;try{const value=read(project,file.path);sources.push({...value,score:score(query,file.path,value.content),important:/^(README\.md|package\.json|index\.html)$/i.test(file.path)});}catch{}}
+  for(const file of all.files){if(file.kind==='image'||file.kind==='audio'||excluded(file.path,patterns))continue;try{const value=read(project,file.path);sources.push({...value,score:score(query,file.path,value.content),important:/^(README\.md|package\.json|index\.html)$/i.test(file.path)});}catch{}}
   sources.sort((a,b)=>(b.score-a.score)||(Number(b.important)-Number(a.important))||a.path.localeCompare(b.path));
   const snippets=[];let remaining=project.contextCharacters||8000;
   for(const file of sources.slice(0,8)){

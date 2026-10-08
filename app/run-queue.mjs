@@ -34,7 +34,7 @@ export class RunQueue {
     res.write = text => { for (const line of String(text).trim().split('\n')) if (line) this.event(run, JSON.parse(line)); return true; };
     res.end = () => { res.writableEnded = true; };
     try { if (this.before) await this.before(run); await this.execute(req, res, { ...run, runId: run.id }); if (run.status === 'running') run.status = 'error'; }
-    catch (error) { run.status = 'error'; run.error = error.message; }
+    catch (error) { run.status = 'error'; run.phase = 'Failed to start'; run.error = error.message; }
     finally { run.finishedAt = new Date().toISOString(); this.save(); this.pumping = false; if (!this.stopping) setTimeout(() => void this.pump(), 25); }
   }
   cancelQueued(id) {
