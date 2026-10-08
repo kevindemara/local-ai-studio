@@ -38,7 +38,7 @@ No Docker, cloud account or paid model subscription is required. Internet is nee
 - **Tune and compare models:** separate Ask/Plan/Build profiles, optional model routing, and serial two-model comparisons with actual responses and measured token speed.
 - **Find and share work:** full conversation-content search, a Ctrl/Cmd K command palette for files/projects/tools/prompts, and checksum-verified source-only project ZIP export/import.
 - **Understand and refine code:** a searchable symbol/import map with reverse dependencies, source-line navigation, TODO-to-task cards and reviewed multi-file literal replacements.
-- **Control each build:** allowed/protected edit paths, ordered lint/typecheck/build/test scripts, reviewed Plan-to-Build handoff, and wall-clock/model-round limits that preserve completed work.
+- **Control each build:** allowed/protected edit paths, ordered lint/typecheck/build/test scripts, reviewed Plan-to-Build handoff, automatic context continuation, and optional wall-clock/model-round limits. There is no default round or time cutoff; completed work survives interruptions.
 - **Manage a growing local workspace:** pin/tag/archive chats, inspect installed model storage/capabilities, deliberately remove exact model tags, and choose Eco/Balanced/Warm memory or Auto/CPU compute.
 
 See the [Project hub guide](docs/PROJECT-HUB.md) for workflows and limits, and the [20-feature research and selection](docs/FEATURE-RESEARCH.md) for what shipped and what remains a candidate.

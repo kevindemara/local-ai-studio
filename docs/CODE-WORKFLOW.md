@@ -22,7 +22,7 @@ Ask for a plan in **Plan** mode. A finished reply has **Review & build plan**. S
 
 **Organize chats** supports pins, up to eight tags, and archive/restore. Pins sort first in the sidebar, and sidebar search also matches tags. Archived chats are hidden from the normal list except a currently selected archived chat; full-history search still finds their messages. Stop queued/running requests before changing archive state.
 
-**Run limits** applies a time limit of none/5/15/30/60 minutes and a maximum of 2/10/20/40/80 model rounds. Defaults remain no time limit and 40 rounds. Loading and tool execution count toward elapsed time once a queued run starts. A round means one model request, possibly several tools. Messages show rounds used. Limit errors retain completed files and offer Continue through the existing recovery controls; Continue starts a new budget.
+**Run limits** optionally applies a time limit of 5/15/30/60 minutes or a maximum of 2/10/20/40/80 model rounds. Neither limit applies by default. Loading and tool execution count toward elapsed time once a queued run starts. A round means one model request, possibly several tools. Messages show rounds used. Repeated identical tool calls without progress still stop with an explanation; the user can cancel a run at any time. Saved files remain available after any stop, and Continue starts another run.
 
 ## Manage local resources
 

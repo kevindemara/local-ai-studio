@@ -19,7 +19,7 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
   fs.mkdirSync(deep, { recursive: true });
   fs.writeFileSync(path.join(deep, 'license.txt'), 'A deeply nested project file.');
 
-  let modelCalls = 0;
+  let modelCalls = 0, longCalls = 0;
   const mock = http.createServer(async (req, res) => {
     if (req.url === '/api/tags') return res.end('{"models":[{"name":"gpt-oss-20b-local"}]}');
     if (req.url === '/api/ps') return res.end('{"models":[]}');
@@ -28,7 +28,18 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
       modelCalls++;
       let body = ''; for await (const chunk of req) body += chunk;
       const request = JSON.parse(body);
-      if (request.messages.at(-1)?.content === 'Always limit' || request.messages.at(-1)?.content === 'Force limit' && request.think !== false) return res.end(JSON.stringify({ message: { thinking: 'Working through the task.' }, done: true, done_reason: 'length', prompt_eval_count: 4000, eval_count: 20 }) + '\n');
+      const query=request.messages.filter(message=>message.role==='user').at(-1)?.content;
+      if(query==='Long task'){
+        if(longCalls++<41)return res.end(JSON.stringify({message:{tool_calls:[{function:{name:'read_project_file',arguments:{path:`src/feature-${longCalls}.js`}}}]} })+'\n'+JSON.stringify({done:true,done_reason:'stop'})+'\n');
+        return res.end(JSON.stringify({message:{content:'Finished the long inspection.'},done:true,done_reason:'stop'})+'\n');
+      }
+      if(query==='Stuck task')return res.end(JSON.stringify({message:{tool_calls:[{function:{name:'list_project_files',arguments:{}}}]} })+'\n'+JSON.stringify({done:true,done_reason:'stop'})+'\n');
+      if (query==='Inspect files') {
+        const listed=request.messages.some(message=>message.role==='tool'&&message.tool_name==='list_project_files'||message.role==='system'&&message.content.includes('Recent tool excerpt')&&message.content.includes('list_project_files'));
+        if(listed)return res.end(JSON.stringify({message:{content:'I inspected the bounded project listing.'},done:true,done_reason:'stop'})+'\n');
+        return res.end(JSON.stringify({message:{tool_calls:[{function:{name:'list_project_files',arguments:{}}}]} })+'\n'+JSON.stringify({done:true,done_reason:'stop'})+'\n');
+      }
+      if (request.messages.at(-1)?.content === 'Always limit' || ['Force limit','Partial limit'].includes(request.messages.at(-1)?.content) && request.think !== false) return res.end(JSON.stringify({ message: { thinking: 'Working through the task.', ...(request.messages.at(-1)?.content==='Partial limit'?{content:'I will start by'}:{}) }, done: true, done_reason: 'length', prompt_eval_count: 4000, eval_count: 20 }) + '\n');
       return res.end(JSON.stringify({ message: { content: 'The project is ready.' }, done: true, done_reason: 'stop' }) + '\n');
     }
     res.end('{}');
@@ -79,6 +90,44 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
     }
     assert.equal(limitedResult.run.status, 'complete');
     assert.equal(limitedResult.chat.messages.at(-1).content, 'The project is ready.');
+    const partial = await api('/runs', { chatId: chat.id, content: 'Partial limit', mode: 'build' });
+    let partialResult;
+    for (let i = 0; i < 100; i++) {
+      partialResult = await api(`/runs/${partial.id}`);
+      if (!['queued', 'running'].includes(partialResult.run.status)) break;
+      await delay(50);
+    }
+    assert.equal(partialResult.run.status, 'complete');
+    assert.equal(partialResult.chat.messages.at(-1).content, 'The project is ready.', 'discard the unfinished reply after automatic continuation');
+    const inspection=await api('/runs',{chatId:chat.id,content:'Inspect files',mode:'build'});
+    let inspectionResult;
+    for(let i=0;i<100;i++){
+      inspectionResult=await api(`/runs/${inspection.id}`);
+      if(!['queued','running'].includes(inspectionResult.run.status))break;
+      await delay(50);
+    }
+    assert.equal(inspectionResult.run.status,'complete');
+    const listing=JSON.parse(inspectionResult.chat.messages.at(-1).toolLog[0].summary);
+    assert.equal(listing.files.length,50);
+    assert.ok(listing.omitted>0);
+    const long=await api('/runs',{chatId:chat.id,content:'Long task',mode:'build'});
+    let longResult;
+    for(let i=0;i<200;i++){
+      longResult=await api(`/runs/${long.id}`);
+      if(!['queued','running'].includes(longResult.run.status))break;
+      await delay(50);
+    }
+    assert.equal(longResult.run.status,'complete',longResult.run.error);
+    assert.equal(longResult.chat.messages.at(-1).limits.roundsUsed,42);
+    const stuck=await api('/runs',{chatId:chat.id,content:'Stuck task',mode:'build'});
+    let stuckResult;
+    for(let i=0;i<100;i++){
+      stuckResult=await api(`/runs/${stuck.id}`);
+      if(!['queued','running'].includes(stuckResult.run.status))break;
+      await delay(50);
+    }
+    assert.equal(stuckResult.run.status,'error');
+    assert.match(stuckResult.run.error,/repeated list_project_files without making progress/);
     const exhausted = await api('/runs', { chatId: chat.id, content: 'Always limit', mode: 'build' });
     let exhaustedResult;
     for (let i = 0; i < 100; i++) {

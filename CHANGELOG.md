@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3 — 2026-10-08
+
+- Removed the default 40-round Build cutoff. Runs now continue across productive model calls until completion or cancellation, with optional per-project round/time limits.
+- When a Build reply fills its context, Studio retries up to three times with compacted context in the same run. Small-context Qwen builds skip extended reasoning so more tokens remain for file actions.
+- Bounded file listings, code maps and Build file reads to prevent large tool responses from crowding out the next action. Checkpoints preserve a recent tool excerpt, and repeated identical tool calls stop with a specific no-progress error.
+- Added a direct Build context settings button beside incomplete replies and clarified long-task controls in Project hub.
+
 ## 0.6.2 — 2026-10-07
 
 - Added a persistent Build activity strip showing the current stage, elapsed time and last model activity. Loading, reasoning and answer streaming now have distinct labels.

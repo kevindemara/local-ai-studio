@@ -72,6 +72,7 @@ test('tool history preserves real file content and checkpoints only completed wo
     assert.equal(readDone.chat.messages.at(-1).status, 'complete'); assert.equal(call, 5);
   } finally {
     if (child.exitCode === null) { const exited = once(child, 'exit'); child.kill(); await exited; }
+    mock.closeAllConnections();
     await new Promise(r => mock.close(r));
   }
 });
