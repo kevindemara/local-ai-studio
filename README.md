@@ -41,11 +41,11 @@ No Docker, cloud account or paid model subscription is required. Internet is nee
 - **Control each build:** allowed/protected edit paths, ordered lint/typecheck/build/test scripts, reviewed Plan-to-Build handoff, automatic context continuation, and optional wall-clock/model-round limits. There is no default round or time cutoff; completed work survives interruptions.
 - **Manage a growing local workspace:** pin/tag/archive chats, inspect installed model storage/capabilities, deliberately remove exact model tags, and choose Eco/Balanced/Warm memory or Auto/CPU compute.
 
-See the [Project hub guide](docs/PROJECT-HUB.md) for workflows and limits, and the [20-feature research and selection](docs/FEATURE-RESEARCH.md) for what shipped and what remains a candidate.
+See the [Project hub guide](docs/PROJECT-HUB.md) for workflows and limits.
 
 Projects appear above the Studio tools in the sidebar, with an independently scrolling project list.
 
-The new [Code & workflow guide](docs/CODE-WORKFLOW.md) covers the ten additions in 0.5. Read [another twenty researched features](docs/FEATURE-RESEARCH-02.md) for the ranked selection and ten future candidates. Open **Code & workflow** in the sidebar; model storage and memory controls also appear under **Setup & models**.
+The [Code & workflow guide](docs/CODE-WORKFLOW.md) explains source navigation, edit controls and model settings. Open **Code & workflow** in the sidebar; model storage and memory controls also appear under **Setup & models**.
 
 Image and audio generation are optional and require separately installed local engines. Model vision support does **not** mean image generation. See [configuration](docs/CONFIGURATION.md).
 
@@ -87,14 +87,14 @@ Developer Git checkouts use **Prepare release** and remain under Git control: up
 
 **Create workspace backup** saves project source files, chats, settings and file history locally. Recovery verifies file checksums and opens recovered projects in separate folders, leaving original project folders intact. It creates a backup before recovery and disables MCP access until you reconnect. Dependency folders, Git history, model weights and OAuth/GitHub credential stores are excluded. Backups can contain private project files and are not encrypted. Details and limits are in [configuration](docs/CONFIGURATION.md#workspace-recovery).
 
-## Developer start
+## Run from source
 
 ```sh
 npm ci --ignore-scripts
 npm start
 ```
 
-Open **http://127.0.0.1:3211**. `npm run launch` starts the app in the background and opens a browser. `npm test` runs the regression and public-workflow checks without downloading model weights. Git must be installed for Git tests; template tests install small development dependencies.
+Open **http://127.0.0.1:3211**. `npm run launch` starts the app in the background and opens a browser.
 
 Workspace data is stored separately from the source: `%LOCALAPPDATA%\LocalAIStudio` on Windows and `$XDG_DATA_HOME/LocalAIStudio` (or `~/.local/share/LocalAIStudio`) elsewhere. See [configuration and backups](docs/CONFIGURATION.md).
 
@@ -106,8 +106,8 @@ Build mode can execute project code and install project dependencies **as your O
 
 GitHub login remains in GitHub CLI’s normal credential storage. Studio does not ask for a password or store a personal access token in its workspace. Public publishing sends committed history to GitHub; review selected files and commits first. Built-in source tools refuse common secret file types, but they cannot detect every secret embedded in source code.
 
-## Research and next steps
+## License and security
 
-The [current-tool comparison](docs/RESEARCH.md) compares Open WebUI, LM Studio, Jan and AnythingLLM and explains ideas still worth adding. The [roadmap](docs/ROADMAP.md) distinguishes shipped work from future features. Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+See [SECURITY.md](SECURITY.md) for security reporting and safe-use guidance.
 
 Studio’s code uses the MIT license. Model weights, SDKs and prerequisites keep their respective licenses and terms. Model weights are downloaded directly from Ollama and are never bundled in a Studio release.

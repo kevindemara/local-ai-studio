@@ -29,5 +29,3 @@ Ask for a plan in **Plan** mode. A finished reply has **Review & build plan**. S
 **Model library** uses Ollama's actual local inventory. Inspect model capabilities, quantization and model metadata; native context limits are model metadata, not the active context allocation. Tag sizes may share layers and should not be summed as unique disk usage. **Remove tag…** requires typing the exact installed tag and waiting for active/queued work to finish. History remains; select another model in profiles/chats that referenced the removed tag. No installed models are removed automatically.
 
 **Memory & compute** offers **Eco** (unload after each response), **Balanced** (two minutes) and **Warm** (ten minutes). Auto lets Ollama place the model; CPU requests zero GPU layers and can be slower. Normal replies and model tests honour these preferences. Comparisons honour compute selection but always unload between models. Eco can reload between agent rounds. These are request-level options, not changes to Docker, GPU drivers or Ollama's system configuration.
-
-For the complete ranked feature research and deferred ideas, read [FEATURE-RESEARCH-02.md](FEATURE-RESEARCH-02.md).
