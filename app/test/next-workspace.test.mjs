@@ -67,6 +67,12 @@ test('queued runs persist, execute serially and cancelled queued requests never 
   const failed=failedQueue.enqueue({content:'cannot start'});
   for(let i=0;i<100 && ['queued','running'].includes(failed.status);i++)await wait(5);
   assert.equal(failed.status,'error');assert.equal(failed.phase,'Failed to start');assert.match(failed.error,/checkpoint/);failedQueue.close();
+  const old={chats:[{id:'chat',messages:[{id:'reply',status:'length'}]}],runs:[{id:'old',chatId:'chat',messageId:'reply',status:'complete',phase:'Finished'}]};
+  const migrated=new RunQueue(old,()=>{},()=>{},()=>true);assert.equal(old.runs[0].status,'incomplete');assert.equal(old.runs[0].phase,'Context limit reached');migrated.close();
+  const live={runs:[]};const incompleteQueue=new RunQueue(live,()=>{},async(req,res)=>{res.write(JSON.stringify({type:'done',chat:{messages:[{id:'reply',status:'length',error:'Context filled'}]}}));},()=>false);
+  const incomplete=incompleteQueue.enqueue({content:'limited'});
+  for(let i=0;i<100 && ['queued','running'].includes(incomplete.status);i++)await wait(5);
+  assert.equal(incomplete.status,'incomplete');assert.equal(incomplete.error,'Context filled');incompleteQueue.close();
 });
 for(const id of ['static','node','react'])test(id+' starter verifies and serves real connected files',async()=>{
   const p=fixture('template-'+id);for(const [relative,content]of Object.entries(templateFiles(id)))writeProjectFile(p,relative,content,path.join(root,'backups'));

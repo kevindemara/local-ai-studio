@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2 — 2026-10-07
+
+- Added a persistent Build activity strip showing the current stage, elapsed time and last model activity. Loading, reasoning and answer streaming now have distinct labels.
+- Reserved more room for model output in small contexts and retried once with less source context when a model reached its context limit before answering.
+- Context-limited runs are marked incomplete with a clear explanation instead of appearing finished with a blank reply. Previous affected runs are corrected when Studio restarts.
+
 ## 0.6.1 — 2026-10-07
 
 - Fixed Build mode rejecting a normal project because a nested folder exceeded an overly shallow checkpoint scan. Checkpoints still enforce file-count and 128 MB limits.

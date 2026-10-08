@@ -5,7 +5,14 @@ export class RunQueue {
   constructor(state, save, execute, busy, before) {
     this.state = state; this.save = save; this.execute = execute; this.busy = busy; this.before = before; this.pumping = false; this.stopping = false;
     state.runs ||= [];
-    for (const run of state.runs) if (run.status === 'running') { run.status = 'interrupted'; run.phase = 'Server restarted. Continue from saved project files.'; run.finishedAt = new Date().toISOString(); }
+    for (const run of state.runs) {
+      if (run.status === 'running') { run.status = 'interrupted'; run.phase = 'Server restarted. Continue from saved project files.'; run.finishedAt = new Date().toISOString(); }
+      const message = state.chats?.find(chat => chat.id === run.chatId)?.messages?.find(item => item.id === run.messageId);
+      if (run.status === 'complete' && message?.status === 'length') {
+        run.status = 'incomplete'; run.phase = 'Context limit reached';
+        run.error = message.error || 'The model reached its context limit before completing this request.';
+      }
+    }
     this.save();
   }
   enqueue(input) {
@@ -15,19 +22,20 @@ export class RunQueue {
     this.state.runs.push(run); this.save(); setTimeout(() => void this.pump(), 0); return run;
   }
   event(run, value) {
+    run.lastActivityAt = new Date().toISOString();
     if (value.type === 'phase') run.phase = value.phase;
     if (value.type === 'terminal') run.output = (run.output + value.output).slice(-40_000);
     if (!['delta', 'terminal', 'start'].includes(value.type)) { run.events.push({ ...(value.type === 'done' ? {type:'done'} : value), at: new Date().toISOString() }); run.events = run.events.slice(-100); }
     if (value.type === 'done') {
-      const assistant = value.chat.messages.at(-1); run.status = assistant.status === 'complete' || assistant.status === 'length' ? 'complete' : assistant.status;
-      run.error = assistant.error; run.messageId = assistant.id; run.phase = run.status === 'complete' ? 'Finished' : run.status;
+      const assistant = value.chat.messages.at(-1); run.status = assistant.status === 'length' ? 'incomplete' : assistant.status;
+      run.error = assistant.error; run.messageId = assistant.id; run.phase = run.status === 'complete' ? 'Finished' : run.status === 'incomplete' ? 'Context limit reached' : run.status;
     }
     if (!run.savedAt || Date.now() - run.savedAt > 750 || value.type === 'done') { run.savedAt = Date.now(); this.save(); }
   }
   async pump() {
     if (this.pumping || this.stopping || this.busy()) return;
     const run = this.state.runs.find(r => r.status === 'queued'); if (!run) return;
-    this.pumping = true; run.status = 'running'; run.startedAt = new Date().toISOString(); this.save();
+    this.pumping = true; run.status = 'running'; run.phase = 'Preparing project checkpoint'; run.startedAt = new Date().toISOString(); this.save();
     const req = new EventEmitter(), res = new EventEmitter();
     res.destroyed = false; res.writableEnded = false; res.headersSent = false;
     res.writeHead = () => { res.headersSent = true; };

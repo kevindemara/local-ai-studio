@@ -26,7 +26,7 @@ No Docker, cloud account or paid model subscription is required. Internet is nee
 
 - **Hardware-aware setup:** measured NVIDIA VRAM, CPU/RAM detection, Apple unified-memory handling, honest fallbacks for unknown adapters, model fit estimates and optional verified VRAM entry.
 - **Choose free local models:** 11 dated, sourced choices with search and memory-fit/installed filters; streaming download progress and cancellation; automatic discovery of existing Ollama chat models; a short native-tool/speed test.
-- **Build connected projects:** real file creation and edits, source search, starter templates, plans, command output, verification/repair loops, live previews and API checks.
+- **Build connected projects:** real file creation and edits, source search, starter templates, plans, live loading/reasoning/tool activity with elapsed time, command output, verification/repair loops, live previews and API checks.
 - **Create local audio assets:** optional sound effects, original music and spoken voice. The Sound panel saves WAV clips into a project, plays them back and makes them available in Project files. Build mode can generate a clip when a project needs one.
 - **Review and recover:** diffs, undo, checkpoints, chat forks, durable queued runs and interrupted-run recovery.
 - **Use GitHub visually:** account connection through GitHub CLI, repository search/clone, project switching, Git initialization, selected-file commits, branch creation/switching, pull, push and repository publishing.

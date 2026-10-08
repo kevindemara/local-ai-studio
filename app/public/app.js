@@ -91,7 +91,7 @@ function renderMessages(forceScroll = false) {
   $('messages').innerHTML = (c?.messages || []).map(message => {
     const isUser = message.role === 'user', m = model(message.model), time = new Date(message.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const thinking = message.thinking ? `<details class="thinking" data-message="${message.id}" ${expanded.has(message.id) ? 'open' : ''}><summary>${message.status === 'generating' && !message.content ? 'Thinking…' : 'Reasoning'}</summary><div class="thinking-body">${escape(message.thinking)}</div></details>` : '';
-    const answer = isUser ? escape(message.content) : message.content ? markdown(message.content) : message.status === 'generating' ? `<div class="stream-status"><span class="stream-dot"></span>${escape(phase || 'Loading model')}</div>` : '';
+    const answer = isUser ? escape(message.content) : message.content ? markdown(message.content) : message.status === 'generating' ? `<div class="stream-status"><span class="stream-dot"></span>${escape(phase || 'Loading model')}</div>` : message.status === 'length' ? '<p class="message-error">The model used its context before producing an answer. No response was completed.</p>' : '';
     const stats = message.metrics ? `${message.metrics.tokens} tokens <span>·</span> ${message.metrics.tokensPerSecond.toFixed(1)} tokens/sec <span>·</span> ${message.metrics.totalSeconds.toFixed(1)}s total` : message.status === 'generating' ? 'Generating locally' : message.status === 'stopped' ? 'Stopped' : '';
     return `<article class="message ${isUser ? 'user' : 'assistant'}" data-message="${message.id}"><div class="message-header"><span class="avatar ${isUser ? 'user' : m.color}">${isUser ? 'Y' : escape(m.short)}</span><span>${isUser ? 'You' : escape(m.label)}</span><span class="message-time">${escape(time)}</span></div>${thinking}<div class="answer">${answer}</div>${isUser && message.files?.length ? `<div class="message-files">Attached: ${message.files.map(escape).join(' · ')}</div>` : ''}${message.error ? `<div class="message-error">${escape(message.error)}</div>` : ''}${!isUser ? `<div class="message-footer">${stats}<button data-action="copy-message" data-id="${message.id}">Copy answer</button>${message.status !== 'generating' ? `<button data-action="fork-message" data-id="${message.id}">Fork</button><button data-action="retry-message" data-id="${message.id}">Retry</button>${['error','stopped','interrupted','length'].includes(message.status) ? `<button data-action="continue-message" data-id="${message.id}">Continue</button>` : ''}` : ''}${message.status === 'length' ? '<span>Context limit reached</span>' : ''}${message.status === 'interrupted' ? '<span>Interrupted when the app stopped</span>' : ''}</div>` : ''}</article>`;
   }).join('');
@@ -169,6 +169,7 @@ async function refreshStatus() {
 }
 async function sendMessage() {
   const content = $('prompt').value.trim(); if (!content || !project()) return;
+  $('reply-notice').textContent = '';
   let c = chat(); if (!c) c = await newChat(false);
   const run = await api('/runs',{chatId:c.id,content,model:$('model-select').value,mode:$('mode-select').value});
   state.runs ||= []; state.runs.push(run); setPrompt(''); saveDraft();
@@ -483,6 +484,7 @@ async function openReview(id) {
 }
 Object.assign(actions, {
   workbench: () => switchWorkTab('plan'),
+  'run-activity': () => switchWorkTab('runs'),
   'save-editor': async () => { if (busy) throw new Error('Stop the current task before saving.'); await api('/projects/' + editorProject + '/file', { path: editorPath, content: $('preview-content').value }); $('editor-status').textContent = 'Saved with backup.'; await loadFiles(); },
   'undo-change': async () => { if (busy) throw new Error('Stop the current task before undoing.'); await api('/projects/' + reviewProject + '/undo', { id: reviewId }); $('review-status').textContent = 'Change undone.'; $('undo-change').disabled = true; await loadFiles(); await renderWorkbench(); },
   'source-search': () => { $('search-dialog').showModal(); $('source-search-query').focus(); },
@@ -512,6 +514,20 @@ for (const [id, name] of [['search-icon', 'search'], ['lock-icon', 'lock'], ['fi
 let syncingRuns=false, runSignature='', lastRunChat='', assetUrl='', inputAction, composerChoices={};
 try { composerChoices=JSON.parse(localStorage.getItem('localAI.composerChoices') || '{}'); } catch {}
 function saveComposerChoices(){try{localStorage.setItem('localAI.composerChoices',JSON.stringify(composerChoices));}catch{}}
+function renderRunIndicator(run) {
+  const indicator = $('run-indicator'); indicator.hidden = !run; if (!run) return;
+  const seconds = Math.max(0, Math.floor((Date.now() - Date.parse(run.startedAt || run.createdAt)) / 1000));
+  $('run-elapsed').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  const stage = run.status === 'queued' ? 'Waiting in queue' : run.phase === 'Loading model' ? 'Loading model into GPU memory' : run.phase || 'Working locally';
+  if ($('run-stage').textContent !== stage) $('run-stage').textContent = stage;
+  const lastSignal = run.lastActivityAt ? Math.max(0, Math.floor((Date.now() - Date.parse(run.lastActivityAt)) / 1000)) : null;
+  const detail = run.status === 'queued' ? 'This request will start after the active task.'
+    : run.phase === 'Loading model' ? 'Waiting for the first token. VRAM can fill while GPU activity is low.'
+    : run.phase === 'Reasoning locally' ? `The model is producing reasoning tokens. Last activity ${lastSignal ?? 0}s ago.`
+    : run.phase === 'Writing reply' ? `The response is streaming. Last activity ${lastSignal ?? 0}s ago.`
+    : `${model(run.model).label} · ${lastSignal === null ? 'Starting now' : `Last update ${lastSignal}s ago`}`;
+  if ($('run-detail').textContent !== detail) $('run-detail').textContent = detail;
+}
 async function syncRuns() {
   if (syncingRuns || !state) return; syncingRuns=true;
   try {
@@ -519,16 +535,18 @@ async function syncRuns() {
     const signature=runs.map(r=>r.id+':'+r.status).join('|');
     const relevant=runs.find(r=>r.chatId===chat()?.id);
     const running=runs.find(r=>r.status==='running');
+    const queued=runs.find(r=>r.status==='queued');
+    if (running || queued) { busy=true;phase=running?.phase || 'Request queued'; }
+    else if (phase && !['Running project task','Starting app preview','Loading image model'].includes(phase) && $('image-stop').hidden) { busy=false;phase=''; }
     if (relevant && (['running','queued'].includes(relevant.status) || signature!==runSignature || lastRunChat!==chat()?.id)) {
-      const snapshot=await api('/runs/'+relevant.id); if(snapshot.run.status === 'error' && !snapshot.run.messageId) $('reply-notice').textContent=snapshot.run.error || 'Request could not start. See Runs for details.'; updateChat(snapshot.chat);applyProject(snapshot.project);liveOutput=snapshot.run.output || ''; renderMessages();renderSidebar();
+      const snapshot=await api('/runs/'+relevant.id); if((snapshot.run.status === 'error' && !snapshot.run.messageId) || snapshot.run.status === 'incomplete') $('reply-notice').textContent=snapshot.run.error || 'Request did not complete. See Runs for details.'; updateChat(snapshot.chat);applyProject(snapshot.project);liveOutput=snapshot.run.output || ''; renderMessages();renderSidebar();
       if (!$('file-panel').hidden && ['plan','checks','runs'].includes(workTab)) void renderWorkbench();
       if (!['running','queued'].includes(relevant.status) && signature!==runSignature) { void loadFiles(); if(workTab==='preview') setTimeout(()=>void renderWorkbench(),0); }
     }
     if (signature!==runSignature && workTab==='runs') void renderWorkbench();
     runSignature=signature; lastRunChat=chat()?.id || '';
     // Manual tasks and image generation still use their existing UI lifecycle.
-    if (running || runs.some(r=>r.status==='queued')) { busy=true;phase=running?.phase || 'Request queued'; }
-    else if (phase && !['Running project task','Starting app preview','Loading image model'].includes(phase) && $('image-stop').hidden) { busy=false;phase=''; }
+    renderRunIndicator(running || queued);
     renderComposer();
   } catch(error) { $('reply-notice').textContent='Reconnecting to the app. Running requests remain on the server. '+error.message; }
   finally { syncingRuns=false; }

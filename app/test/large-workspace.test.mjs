@@ -26,6 +26,9 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
     if (req.url === '/api/version') return res.end('{"version":"test"}');
     if (req.url === '/api/chat') {
       modelCalls++;
+      let body = ''; for await (const chunk of req) body += chunk;
+      const request = JSON.parse(body);
+      if (request.messages.at(-1)?.content === 'Always limit' || request.messages.at(-1)?.content === 'Force limit' && request.think !== false) return res.end(JSON.stringify({ message: { thinking: 'Working through the task.' }, done: true, done_reason: 'length', prompt_eval_count: 4000, eval_count: 20 }) + '\n');
       return res.end(JSON.stringify({ message: { content: 'The project is ready.' }, done: true, done_reason: 'stop' }) + '\n');
     }
     res.end('{}');
@@ -67,6 +70,25 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
     const saved = await api('/bootstrap');
     const checkpoint = saved.state.checkpoints.find(item => item.id === result.run.checkpointId);
     assert.equal(checkpoint.files.length, 122);
+    const limited = await api('/runs', { chatId: chat.id, content: 'Force limit', mode: 'build' });
+    let limitedResult;
+    for (let i = 0; i < 100; i++) {
+      limitedResult = await api(`/runs/${limited.id}`);
+      if (!['queued', 'running'].includes(limitedResult.run.status)) break;
+      await delay(50);
+    }
+    assert.equal(limitedResult.run.status, 'complete');
+    assert.equal(limitedResult.chat.messages.at(-1).content, 'The project is ready.');
+    const exhausted = await api('/runs', { chatId: chat.id, content: 'Always limit', mode: 'build' });
+    let exhaustedResult;
+    for (let i = 0; i < 100; i++) {
+      exhaustedResult = await api(`/runs/${exhausted.id}`);
+      if (!['queued', 'running'].includes(exhaustedResult.run.status)) break;
+      await delay(50);
+    }
+    assert.equal(exhaustedResult.run.status, 'incomplete');
+    assert.match(exhaustedResult.run.error, /context filled/i);
+    assert.equal(exhaustedResult.chat.messages.at(-1).status, 'length');
   } finally {
     if (child.exitCode === null) { const exited = once(child, 'exit'); child.kill(); await exited; }
     mock.closeAllConnections(); await new Promise(resolve => mock.close(resolve));
