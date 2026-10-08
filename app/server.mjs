@@ -216,7 +216,14 @@ async function executeTool(project, call, controller, assistant, emit) {
   } else if (name === 'list_project_files') {
     const listing = listFiles(project), filter = String(input.path || '').toLowerCase().slice(0,120);
     const matches = listing.files.filter(file => !filter || file.path.toLowerCase().includes(filter));
-    result = { files: matches.slice(0,50).map(file => file.path), total: matches.length, omitted: Math.max(0,matches.length-50), truncated: listing.truncated, hint: matches.length>50 ? 'Filter with path, or use search_project to find code by name or text.' : undefined };
+    const request=state.runs.find(run=>run.id===assistant.runId)?.content||'';
+    const ignored=new Set(['about','after','also','before','build','code','could','current','each','files','file','from','have','implement','implemented','into','please','project','read','request','then','these','this','using','want','with']);
+    const terms=[...new Set((request.toLowerCase().match(/[a-z0-9_]{4,}/g)||[]).filter(word=>!ignored.has(word)))].slice(0,30);
+    if(!filter&&terms.length)matches.sort((a,b)=>{
+      const score=file=>terms.reduce((n,term)=>n+(file.path.toLowerCase().includes(term)?5:0),0)+(/^(apps|services|src)\//.test(file.path)?2:0);
+      return score(b)-score(a)||a.path.localeCompare(b.path);
+    });
+    result = { files: matches.slice(0,50).map(file => file.path), total: matches.length, omitted: Math.max(0,matches.length-50), truncated: listing.truncated, hint: matches.length>50 ? 'Paths are ranked by the current request. Filter with path or use search_project for code text.' : undefined };
   } else if (name === 'project_code_map') {
     result = agentCodeMap(project,listFiles,safeFile,{path:String(input.path||'').slice(0,120),maxChars:Math.min(5000,Math.max(2000,(assistant.profile?.num_ctx||8192)*0.75))});
   }

@@ -34,7 +34,7 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
         return res.end(JSON.stringify({message:{content:'Finished the long inspection.'},done:true,done_reason:'stop'})+'\n');
       }
       if(query==='Stuck task')return res.end(JSON.stringify({message:{tool_calls:[{function:{name:'list_project_files',arguments:{}}}]} })+'\n'+JSON.stringify({done:true,done_reason:'stop'})+'\n');
-      if (query==='Inspect files') {
+      if (['Inspect files','Inspect face settings files'].includes(query)) {
         const listed=request.messages.some(message=>message.role==='tool'&&message.tool_name==='list_project_files'||message.role==='system'&&message.content.includes('Recent tool excerpt')&&message.content.includes('list_project_files'));
         if(listed)return res.end(JSON.stringify({message:{content:'I inspected the bounded project listing.'},done:true,done_reason:'stop'})+'\n');
         return res.end(JSON.stringify({message:{tool_calls:[{function:{name:'list_project_files',arguments:{}}}]} })+'\n'+JSON.stringify({done:true,done_reason:'stop'})+'\n');
@@ -99,6 +99,7 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
     }
     assert.equal(partialResult.run.status, 'complete');
     assert.equal(partialResult.chat.messages.at(-1).content, 'The project is ready.', 'discard the unfinished reply after automatic continuation');
+    fs.writeFileSync(path.join(folder,'src','face-settings.js'),'export const faceSettings = true;\n');
     const inspection=await api('/runs',{chatId:chat.id,content:'Inspect files',mode:'build'});
     let inspectionResult;
     for(let i=0;i<100;i++){
@@ -110,6 +111,16 @@ test('Build checkpoints a deep project and fits a short request into 4K context'
     const listing=JSON.parse(inspectionResult.chat.messages.at(-1).toolLog[0].summary);
     assert.equal(listing.files.length,50);
     assert.ok(listing.omitted>0);
+    const focused=await api('/runs',{chatId:chat.id,content:'Inspect face settings files',mode:'build'});
+    let focusedResult;
+    for(let i=0;i<100;i++){
+      focusedResult=await api(`/runs/${focused.id}`);
+      if(!['queued','running'].includes(focusedResult.run.status))break;
+      await delay(50);
+    }
+    assert.equal(focusedResult.run.status,'complete');
+    const focusedListing=JSON.parse(focusedResult.chat.messages.at(-1).toolLog[0].summary);
+    assert.equal(focusedListing.files[0],'src/face-settings.js');
     const long=await api('/runs',{chatId:chat.id,content:'Long task',mode:'build'});
     let longResult;
     for(let i=0;i<200;i++){

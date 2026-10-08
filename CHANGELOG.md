@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.4 — 2026-10-08
+
+- File-list tool responses now rank source paths against the current request so relevant files appear before unrelated folders in large projects. Added a regression check for focused listings.
+
 ## 0.6.3 — 2026-10-08
 
 - Removed the default 40-round Build cutoff. Runs now continue across productive model calls until completion or cancellation, with optional per-project round/time limits.
